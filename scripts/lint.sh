@@ -5,6 +5,6 @@ isort --check letstune tests
 black --check letstune tests
 mypy letstune tests
 flake8 letstune tests
-pytest
+pytest --doctest-modules
 
 echo "Lint OK!"
