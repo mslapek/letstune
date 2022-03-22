@@ -4,25 +4,10 @@ version = "0.1.0"
 description = "Hyper-parameter tuning for the masses!"
 authors = ["Michał Słapek <28485371+mslapek@users.noreply.github.com>"]
 
-[tool.mypy]
-warn_unused_configs = true
-disallow_any_generics = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_return_any = true
-no_implicit_reexport = true
-strict_equality = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.10,<3.11"
 numpy = "^1.22.3"
+scipy = "^1.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
