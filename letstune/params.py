@@ -4,6 +4,7 @@ used to define hyper-parameters."""
 
 __all__ = ["Params", "ModelParams", "NoDefaultRandomGenerator"]
 
+import sys
 from types import UnionType
 from typing import Any, Generic, Mapping, TypeVar
 
@@ -22,11 +23,23 @@ class NoDefaultRandomGenerator(Exception):
     ``get_random_params`` for the given class."""
 
 
+def _ensure_annotations_exist(dct: dict[str, Any]) -> None:
+    if "__annotations__" not in dct:
+        dct["__annotations__"] = {}
+
+
+def _eval_annotations(dct: dict[str, Any]) -> None:
+    # compare with https://docs.python.org/3.10/howto/annotations.html
+    globals_ = sys.modules[dct["__module__"]].__dict__
+    annotations = dct["__annotations__"]
+
+    for k, v in annotations.items():
+        if isinstance(v, str):
+            annotations[k] = eval(v, globals_)
+
+
 def _get_slots(dct: dict[str, Any]) -> tuple[str, ...]:
-    try:
-        return tuple(dct["__annotations__"])
-    except KeyError:
-        return tuple()
+    return tuple(dct["__annotations__"])
 
 
 def _random_generator_from_type(t: type[T]) -> RandomParamsGenerator[T]:
@@ -52,10 +65,7 @@ def _random_generator_from_type(t: type[T]) -> RandomParamsGenerator[T]:
 def _get_random_generators(
     dct: dict[str, Any]
 ) -> dict[str, RandomParamsGenerator[Any]]:
-    try:
-        annotations: Mapping[str, Any] = dct["__annotations__"]
-    except KeyError:
-        annotations = {}
+    annotations: Mapping[str, Any] = dct["__annotations__"]
 
     gens = {}
 
@@ -113,6 +123,8 @@ class _ParamsMeta(type):
             return super().__new__(mcs, name, bases, dct)  # type: ignore
 
         _assert_bases_are_valid(bases)
+        _ensure_annotations_exist(dct)
+        _eval_annotations(dct)
 
         slots = _get_slots(dct)
         dct["__slots__"] = slots
