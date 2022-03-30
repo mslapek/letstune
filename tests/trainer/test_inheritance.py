@@ -15,7 +15,7 @@ def test_inherit_one() -> None:
     P = TypeVar("P", bound=letstune.Params)
 
     class MyBaseTrainer(SimpleTrainer[P]):
-        metric = letstune.Metric.natural("loss")
+        metric = letstune.Metric("loss")
 
         def train(self, params: P) -> tuple[Any, MetricValues]:
             return object(), {"loss": 0.5}
@@ -39,7 +39,7 @@ def test_inherit_many() -> None:
     P = TypeVar("P", bound=letstune.Params)
 
     class MyBaseTrainer(SimpleTrainer[P]):
-        metric = letstune.Metric.natural("loss")
+        metric = letstune.Metric("loss")
 
         def train(self, params: P) -> tuple[Any, MetricValues]:
             return object(), {"loss": 0.5}
@@ -73,7 +73,7 @@ def test_inherit_many_with_generics() -> None:
     B = TypeVar("B")
 
     class MyBaseTrainer(SimpleTrainer[P]):
-        metric = letstune.Metric.natural("loss")
+        metric = letstune.Metric("loss")
 
         def train(self, params: P) -> tuple[Any, MetricValues]:
             return object(), {"loss": 0.5}

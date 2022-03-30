@@ -21,7 +21,7 @@ class SomeParams(letstune.Params):
 
 
 class QwertyTrainer(EpochTrainer[SomeParams]):
-    metric = letstune.Metric.natural("accuracy")
+    metric = letstune.Metric("accuracy")
 
     def train_epoch(self) -> MetricValues:
         return {}

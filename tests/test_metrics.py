@@ -1,80 +1,6 @@
-"""Metric examples are based on:
-
-* https://scikit-learn.org/stable/modules/model_evaluation.html
-* https://keras.io/api/metrics/
-"""
-
 import pytest
 
 from letstune import Metric
-
-GREATER_IS_BETTER_EXAMPLES = [
-    # accuracy
-    "acc",
-    "accuracy",
-    "valid_accuracy",
-    "train_accuracy",
-    "binary_accuracy",
-    "categorical_accuracy",
-    "top_k_categorical_accuracy",
-    "foobar_accuracy",
-    "valid_foo_bar_accuracy",
-    "BinaryAccuracy",
-    # score
-    "foobar_score",
-    "valid_foo_bar_score",
-    # miscellaneous
-    "r2",
-    "f1",
-    "auc",
-    "AUC",
-    "valid_AUC",
-    "precision",
-    "TrainPrecision",
-    "recall",
-    "valid_recall",
-    "iou",
-    "cosine_similarity",
-    "ValidCosineSimilarity",
-]
-
-LOWER_IS_BETTER_EXAMPLES = [
-    # loss
-    "loss",
-    "valid_loss",
-    "train_loss",
-    # error
-    "mean_absolute_error",
-    "MeanAbsoluteError",
-    "ValidMeanAbsoluteError",
-    "valid_MeanAbsoluteError",
-    "mean_square_error",
-    "root_mean_squared_error",
-    "valid_mean_square_error",
-    "train_mean_square_error",
-    "foobar_error",
-    "train_foo_bar_error",
-    # crossentropy
-    "binary_crossentropy",
-    "valid_foo_bar_crossentropy",
-    # miscellaneous
-    "mae",
-    "mse",
-    "rmse",
-]
-
-NEG_METRICS = [
-    "neg_mean_square_error",
-    "neg_accuracy",
-    "valid_neg_mean_square_error",
-]
-
-UNKNOWN_METRICS = [
-    "foo_bar",
-    "train_f4",
-    "valid_foo_bar",
-    "tax_rate",
-]
 
 
 def test_instance_creation() -> None:
@@ -88,51 +14,167 @@ def test_greater_is_better_must_be_kwarg() -> None:
     with pytest.raises(TypeError):
         _ = Metric("accuracy", True)  # type: ignore
 
-    with pytest.raises(TypeError):
-        _ = Metric("accuracy")  # type: ignore
+
+def test_str() -> None:
+    m = Metric("accuracy", greater_is_better=True)
+
+    assert repr(m) == "Metric(name='accuracy', greater_is_better=True)"
+    assert repr(m) == str(m)
 
 
-@pytest.mark.parametrize("name", GREATER_IS_BETTER_EXAMPLES)
-def test_natural_greater_is_better_metric(name: str) -> None:
-    m = Metric.natural(name)
+@pytest.mark.parametrize(
+    "name",
+    [
+        "f1_score",
+        "foo_bar_score",
+        "F1Score",
+        "FooBarScore",
+    ],
+)
+def test_score_is_greater_is_better(name: str) -> None:
+    m = Metric(name)
 
     assert m.name == name
     assert m.greater_is_better
 
 
-@pytest.mark.parametrize("name", LOWER_IS_BETTER_EXAMPLES)
-def test_natural_lower_is_better_metric(name: str) -> None:
-    m = Metric.natural(name)
+@pytest.mark.parametrize(
+    "name",
+    [
+        "accuracy",
+        "acc",
+        "top_k_categorical_accuracy",
+        "foo_bar_accuracy",
+        "foo_bar_acc",
+        "Accuracy",
+        "Acc",
+        "TopKCategoricalAccuracy",
+        "FooBarAccuracy",
+        "FooBarAcc",
+    ],
+)
+def test_accuracy_is_greater_is_better(name: str) -> None:
+    m = Metric(name)
+
+    assert m.name == name
+    assert m.greater_is_better
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "log_loss",
+        "foo_bar_loss",
+        "LogLoss",
+        "FooBarLoss",
+    ],
+)
+def test_loss_is_lower_is_better(name: str) -> None:
+    m = Metric(name)
 
     assert m.name == name
     assert not m.greater_is_better
 
 
-@pytest.mark.parametrize("name", UNKNOWN_METRICS + NEG_METRICS)
-def test_nonnatural_metric_raises_value_error(name: str) -> None:
-    with pytest.raises(
-        ValueError, match=f"Cannot infer greater_is_better for metric {name!r}"
-    ):
-        _ = Metric.natural(name)
+@pytest.mark.parametrize(
+    "name",
+    [
+        "mean_absolute_error",
+        "foo_bar_error",
+        "MeanAbsoluteError",
+        "FooBarError",
+    ],
+)
+def test_error_is_lower_is_better(name: str) -> None:
+    m = Metric(name)
 
-
-@pytest.mark.parametrize("name", NEG_METRICS)
-def test_nonnatural_metric_with_neg_suggests_metric_sklearn(name: str) -> None:
-    with pytest.raises(
-        ValueError, match=rf"Maybe you should use Metric\.sklearn\({name!r}\)\?"
-    ):
-        _ = Metric.natural(name)
+    assert m.name == name
+    assert not m.greater_is_better
 
 
 @pytest.mark.parametrize(
     "name",
-    GREATER_IS_BETTER_EXAMPLES
-    + LOWER_IS_BETTER_EXAMPLES
-    + UNKNOWN_METRICS
-    + NEG_METRICS,
+    [
+        "mse",
+        "rmse",
+        "mae",
+        "MSE",
+        "RMSE",
+        "MAE",
+    ],
 )
-def test_sklearn_metric(name: str) -> None:
-    m = Metric.sklearn(name)
+def test_popular_error_acronym_is_lower_is_better(name: str) -> None:
+    m = Metric(name)
 
     assert m.name == name
-    assert m.greater_is_better
+    assert not m.greater_is_better
+
+
+@pytest.mark.parametrize(
+    "original_name",
+    [
+        "foo_bar_score",
+        "foo_bar_accuracy",
+        "foo_bar_acc",
+        "foo_bar_loss",
+        "foo_bar_error",
+        "rmse",
+        "FooBarScore",
+        "FooBarAccuracy",
+        "FooBarAcc",
+        "FooBarLoss",
+        "FooBarError",
+        "RMSE",
+    ],
+)
+def test_neg_negates_greater_is_better(original_name: str) -> None:
+    neg_name = "neg_" + original_name
+
+    assert Metric(neg_name).greater_is_better != Metric(original_name).greater_is_better
+
+
+@pytest.mark.parametrize(
+    "original_name",
+    [
+        "foo_bar_score",
+        "foo_bar_accuracy",
+        "neg_foo_bar_accuracy",
+        "foo_bar_acc",
+        "foo_bar_loss",
+        "neg_foo_bar_loss",
+        "foo_bar_error",
+        "rmse",
+        "FooBarScore",
+        "FooBarAccuracy",
+        "NegFooBarAccuracy",
+        "FooBaracc",
+        "FooBarLoss",
+        "NegFooBarLoss",
+        "FooBarError",
+        "RMSE",
+    ],
+)
+def test_valid_test_are_ignored(original_name: str) -> None:
+    for suffix in ["train_", "valid_"]:
+        new_name = suffix + original_name
+        assert (
+            Metric(new_name).greater_is_better
+            == Metric(original_name).greater_is_better
+        )
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "foo_bar",
+        "FooBar",
+        "train_f4",
+        "valid_foo_bar",
+        "tax_rate",
+    ],
+)
+def test_unknown_metric_raises_value_error(name: str) -> None:
+    with pytest.raises(
+        ValueError, match=f"cannot infer greater_is_better for metric {name!r}"
+    ):
+        _ = Metric(name)

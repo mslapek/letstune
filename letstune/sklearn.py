@@ -162,7 +162,7 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
 
     @property
     def metric(self) -> letstune.Metric:
-        return letstune.Metric.sklearn(
+        return letstune.Metric(
             "valid_score" if self.X_valid is not None else "train_score"
         )
 
@@ -306,7 +306,7 @@ class SklearnCVTrainer(_SklearnTrainerBase[P]):
 
     @property
     def metric(self) -> letstune.Metric:
-        return letstune.Metric.sklearn("mean_valid_score")
+        return letstune.Metric("mean_valid_score")
 
     def train(self, params: P) -> tuple[Any, MetricValues]:
         model = self._create_model(params)
