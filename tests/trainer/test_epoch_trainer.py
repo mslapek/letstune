@@ -23,7 +23,7 @@ class SomeParams(letstune.Params):
 class QwertyTrainer(EpochTrainer[SomeParams]):
     metric = letstune.Metric("accuracy")
 
-    def train_epoch(self) -> MetricValues:
+    def train_epoch(self, epoch: int) -> MetricValues:
         return {}
 
     def load_dataset(self, dataset: Any) -> None:

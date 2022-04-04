@@ -157,7 +157,7 @@ def _classify_metric(name: str) -> bool:
     original_name = name
     name = _normalize(name)
 
-    for prefix in ["train", "valid"]:
+    for prefix in ["train", "valid", "val"]:
         name = name.removeprefix(prefix)
 
     neg = name.startswith("neg")

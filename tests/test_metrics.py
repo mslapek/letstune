@@ -155,8 +155,8 @@ def test_neg_negates_greater_is_better(original_name: str) -> None:
     ],
 )
 def test_valid_test_are_ignored(original_name: str) -> None:
-    for suffix in ["train_", "valid_"]:
-        new_name = suffix + original_name
+    for prefix in ["train_", "valid_", "val_"]:
+        new_name = prefix + original_name
         assert (
             Metric(new_name).greater_is_better
             == Metric(original_name).greater_is_better

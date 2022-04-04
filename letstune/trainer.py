@@ -196,13 +196,15 @@ class EpochTrainer(_BaseTrainer[P]):
         self.model = params.create_model()  # type: ignore
 
     @abstractmethod
-    def train_epoch(self) -> MetricValues:
+    def train_epoch(self, epoch: int) -> MetricValues:
         """Train the model for a next epoch.
 
         Returns new metric values.
 
         Metric values are described in the documentation of
         ``letstune.trainer`` module.
+
+        ``epoch`` is zero-indexed.
         """
         pass
 
