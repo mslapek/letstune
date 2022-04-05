@@ -108,13 +108,13 @@ def oneof(
     DigitsTrainingParams(layer_number=4, learning_rate=0.001)
     """
     if len(candidates) == 0:
-        raise ValueError("Got no candidates")
+        raise ValueError("got no candidates")
 
     p: np.ndarray[Any, Any] | None
     if weights is not None:
         if len(weights) != len(candidates):
             raise ValueError(
-                f"Expected length of weights to be "
+                f"expected length of weights to be "
                 f"{len(candidates)}, got {len(weights)}"
             )
 
@@ -145,9 +145,17 @@ def ints(low: int, high: int) -> RandomParamsGenerator[int]:
     """Returns a random integer in the range ``low``, ``high``
     (both sides inclusive)."""
     if not (low <= high):
-        raise ValueError("Got invalid range")
+        raise ValueError("invalid range")
 
     return oneof(range(low, high + 1))
+
+
+def bools(probability: float = 0.5) -> RandomParamsGenerator[bool]:
+    """Returns ``True`` with given ``probability``."""
+    if not 0 <= probability <= 1:
+        raise ValueError("invalid probability")
+
+    return oneof([False, True], [1 - probability, probability])
 
 
 def uniform(
@@ -166,7 +174,7 @@ def uniform(
         valid &= low > 0
 
     if not valid:
-        raise ValueError("Got invalid range")
+        raise ValueError("invalid range")
 
     if low == high:
         return oneof([low])
@@ -193,14 +201,14 @@ def normal(
        The distribution from scipy has a different parametrization then this function.
     """  # noqa
     if scale < 0:
-        raise ValueError("Got invalid scale")
+        raise ValueError("invalid scale")
 
     if scale == 0:
         return oneof([median])
 
     if log:
         if median <= 0:
-            raise ValueError("Got invalid median")
+            raise ValueError("invalid median")
 
         return _Scipy(stats.lognorm(scale, scale=median))
         # scale=median is NOT a bug!

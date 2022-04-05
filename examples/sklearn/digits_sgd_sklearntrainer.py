@@ -22,7 +22,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 
 class SGDClassifierParams(letstune.ModelParams[SGDClassifier]):
-    average: bool = rand.oneof([True, False])  # type: ignore
+    average: bool
     l1_ratio: float = rand.uniform(0, 1)  # type: ignore
     alpha: float = rand.uniform(1e-2, 1e0, log=True)  # type: ignore
 

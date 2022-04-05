@@ -37,7 +37,7 @@ class AdadeltaParams(letstune.ModelParams[keras.optimizers.Adadelta]):
 class MNISTParams(letstune.Params):
     dense: DenseParams
     optimizer: AdamParams | AdadeltaParams
-    dropout: bool = rand.oneof([False, True])  # type: ignore
+    dropout: bool
 
     def create_model(self) -> keras.Model:
         model = keras.Sequential()

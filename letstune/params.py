@@ -48,6 +48,8 @@ def _random_generator_from_type(t: type[T]) -> RandomParamsGenerator[T]:
 
     if isinstance(t, RandomParamsGenerator):
         return t
+    if t is bool:
+        return rand.bools()  # type: ignore
     if isinstance(t, UnionType):
         try:
             gens = [_random_generator_from_type(tt) for tt in t.__args__]
@@ -309,6 +311,8 @@ class Params(metaclass=_ParamsMeta):
         ----------------------------
 
         If a given type has ``get_random_params`` method, then it is used.
+
+        ``bool`` is assigned ``True`` or ``False``, each with 50% probability.
 
         If a given type is a union, such as ``MyParams1 | MyParams2 | MyParams3``,
         then it
