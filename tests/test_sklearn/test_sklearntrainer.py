@@ -62,16 +62,17 @@ def test_get_random_params() -> None:
 def test_load_dataset() -> None:
     trainer = SklearnTrainer(MyParams)
 
-    trainer.load_dataset(("array1", "array2"))
+    trainer.load_dataset(("array1", "array2", "array3", "array4"))
 
     assert trainer.X == "array1"
-    assert trainer.y == "array2"
-    assert trainer.X_valid is None
-    assert trainer.y_valid is None
+    assert trainer.X_valid == "array2"
+    assert trainer.y == "array3"
+    assert trainer.y_valid == "array4"
 
 
-def test_load_dataset_with_valid() -> None:
+def test_load_dataset_optimize_train_score() -> None:
     trainer = SklearnTrainer(MyParams)
+    trainer.optimize_train_score = True
 
     trainer.load_dataset(("array1", "array2", "array3", "array4"))
 
@@ -81,8 +82,41 @@ def test_load_dataset_with_valid() -> None:
     assert trainer.y_valid == "array4"
 
 
+def test_load_dataset_train_only() -> None:
+    trainer = SklearnTrainer(MyParams)
+    trainer.optimize_train_score = True
+
+    trainer.load_dataset(("array1", "array2"))
+
+    assert trainer.X == "array1"
+    assert trainer.y == "array2"
+    assert trainer.X_valid is None
+    assert trainer.y_valid is None
+
+
 def test_load_dataset_with_invalid_argument() -> None:
     trainer = SklearnTrainer(MyParams)
+
+    with pytest.raises(
+        ValueError,
+        match=r"wrong number of elements in dataset \(expected 4, got 3\)",
+    ):
+        trainer.load_dataset(("array1", "array2", "array3"))
+
+    with pytest.raises(
+        ValueError, match=r"wrong number of elements in dataset \(expected 4, got 2\)"
+    ):
+        trainer.load_dataset(("array1", "array2"))
+
+    with pytest.raises(
+        ValueError, match=r"wrong number of elements in dataset \(expected 4, got 1\)"
+    ):
+        trainer.load_dataset(("array1",))
+
+
+def test_load_dataset_optimize_train_score_with_invalid_argument() -> None:
+    trainer = SklearnTrainer(MyParams)
+    trainer.optimize_train_score = True
 
     with pytest.raises(
         ValueError,
@@ -90,25 +124,29 @@ def test_load_dataset_with_invalid_argument() -> None:
     ):
         trainer.load_dataset(("array1", "array2", "array3"))
 
+    with pytest.raises(
+        ValueError,
+        match=r"wrong number of elements in dataset \(expected 2 or 4, got 1\)",
+    ):
+        trainer.load_dataset(("array1",))
+
 
 def test_metric() -> None:
     trainer = SklearnTrainer(MyParams)
 
-    trainer.load_dataset(("array1", "array2"))
+    assert trainer.metric == letstune.Metric("valid_score", greater_is_better=True)
+
+
+def test_metric_optimize_train_score() -> None:
+    trainer = SklearnTrainer(MyParams)
+    trainer.optimize_train_score = True
 
     assert trainer.metric == letstune.Metric("train_score", greater_is_better=True)
 
 
-def test_metric_with_valid() -> None:
-    trainer = SklearnTrainer(MyParams)
-
-    trainer.load_dataset(("array1", "array2", "array3", "array4"))
-
-    assert trainer.metric == letstune.Metric("valid_score", greater_is_better=True)
-
-
 def test_train() -> None:
     trainer = SklearnTrainer(MyParams)
+    trainer.optimize_train_score = True
     trainer.load_dataset(("array1", "array2"))
     params = MyParams(x=12)
 
@@ -139,9 +177,10 @@ def test_train_with_valid() -> None:
     assert scores == {"valid_score": 11.11}
 
 
-def test_train_with_return_train_score() -> None:
+@pytest.mark.parametrize("field_to_set", ["return_train_score", "optimize_train_score"])
+def test_train_with_return_or_optimize_train_score(field_to_set: str) -> None:
     trainer = SklearnTrainer(MyParams)
-    trainer.return_train_score = True
+    setattr(trainer, field_to_set, True)
     trainer.load_dataset(("array1", "array2", "array3", "array4"))
     params = MyParams(x=12)
 
@@ -160,6 +199,7 @@ def test_train_with_custom_scorer() -> None:
     scorer = MyScorer()
 
     trainer = SklearnTrainer(MyParams, scorer=scorer)
+    trainer.optimize_train_score = True
     trainer.load_dataset(("array1", "array2"))
     params = MyParams(x=12)
 
@@ -208,6 +248,7 @@ def test_train_with_custom_scorer_as_str(mocker: MockerFixture) -> None:
     mocker.patch("sklearn.metrics.get_scorer", get_scorer)
 
     trainer = SklearnTrainer(MyParams, scorer="foobar")
+    trainer.optimize_train_score = True
     trainer.load_dataset(("array1", "array2"))
     params = MyParams(x=12)
 
@@ -226,6 +267,7 @@ def test_train_with_custom_scorer_as_str(mocker: MockerFixture) -> None:
 
 def test_create_model_kwargs() -> None:
     trainer = SklearnTrainer(MyParams, create_model_kwargs={"color": "blue", "foo": 58})
+    trainer.optimize_train_score = True
     trainer.load_dataset(("array1", "array2"))
     params = MyParams(x=12)
 
@@ -242,6 +284,7 @@ def test_create_model_kwargs() -> None:
 
 def test_fit_model_kwargs() -> None:
     trainer = SklearnTrainer(MyParams, fit_model_kwargs={"color": "blue", "foo": 58})
+    trainer.optimize_train_score = True
     trainer.load_dataset(("array1", "array2"))
     params = MyParams(x=12)
 

@@ -127,43 +127,65 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
     Dataset
     -------
 
-    A :class:`SklearnTrainer` can be passed a ``dataset``
-    in two ways.
-
-    **Training data only**::
-
-        dataset = (X, y)
-
-    Model is trained with ``model.fit(X, y)``.
-    Metric ``train_score`` is calculated using ``(X, y)``.
-
-    **Training and validation data**::
+    A :class:`SklearnTrainer` consumes a ``dataset``
+    with train/validation split::
 
         dataset = (X_train, X_valid, y_train, y_valid)
-
-    Model is trained with ``model.fit(X_train, y_train)``.
-    Metric ``valid_score`` is calculated using ``(X_valid, y_valid)``.
 
     This is compatible with output from
     ``sklearn.model_selection.train_test_split``.
 
+    Model is trained with ``model.fit(X_train, y_train)``.
+
     ------
 
+    When ``trainer.optimize_train_score`` is ``True``, then validation
+    data can be omitted::
+
+        dataset = (X_train, y_train)
+
+    Metrics
+    -------
+
+    By default, ``valid_score`` is optimized:
+
+    >>> class MyParams(letstune.Params):
+    ...     l1_ratio: float
+
+    >>> trainer = SklearnTrainer(MyParams)
+    >>> trainer.metric
+    Metric(name='valid_score', greater_is_better=True)
+
+    Metric ``valid_score`` is calculated using ``(X_valid, y_valid)``.
+
+    ``train_score`` is not calculated.
     You can force the calculation of ``train_score`` with
     ``return_train_score``::
 
         trainer = SklearnTrainer(...)
         trainer.return_train_score = True
 
+    Metric ``train_score`` is calculated using ``(X_train, y_train)``.
+
+    ------
+
+    When ``trainer.optimize_train_score`` is ``True``,
+    then ``train_score`` is optimized:
+
+    >>> trainer = SklearnTrainer(MyParams)
+    >>> trainer.optimize_train_score = True
+    >>> trainer.metric
+    Metric(name='train_score', greater_is_better=True)
     """
 
     X_valid: Any = None
     y_valid: Any = None
+    optimize_train_score: bool = False
 
     @property
     def metric(self) -> letstune.Metric:
         return letstune.Metric(
-            "valid_score" if self.X_valid is not None else "train_score"
+            "train_score" if self.optimize_train_score else "valid_score"
         )
 
     def train(self, params: P) -> tuple[Any, MetricValues]:
@@ -174,17 +196,25 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
         if self.X_valid is not None:
             scores["valid_score"] = self._score(model, self.X_valid, self.y_valid)
 
-        if self.return_train_score or len(scores) == 0:
+        if self.return_train_score or self.optimize_train_score or len(scores) == 0:
             scores["train_score"] = self._score(model, self.X, self.y)
 
         return model, scores
 
     def load_dataset(self, dataset: Any) -> None:
         n = len(dataset)
+
+        if n == 4:
+            self.X, self.X_valid, self.y, self.y_valid = dataset
+            return
+
+        if not self.optimize_train_score:
+            raise ValueError(
+                f"wrong number of elements in dataset (expected 4, got {n})"
+            )
+
         if n == 2:
             self.X, self.y = dataset
-        elif n == 4:
-            self.X, self.X_valid, self.y, self.y_valid = dataset
         else:
             raise ValueError(
                 f"wrong number of elements in dataset (expected 2 or 4, got {n})"
