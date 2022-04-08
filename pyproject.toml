@@ -7,7 +7,6 @@ authors = ["Michał Słapek <28485371+mslapek@users.noreply.github.com>"]
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 numpy = "^1.22.3"
-scipy = "^1.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
@@ -16,7 +15,9 @@ mypy = "^0.940"
 flake8 = "^4.0.1"
 pytest-mock = "^3.7.0"
 isort = "^5.10.1"
+
 scikit-learn = "^1.0.2"
+scipy = "^1.8.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

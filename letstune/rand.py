@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
 
 import numpy as np
-from scipy import stats
 
 import letstune
 
@@ -158,6 +157,14 @@ def bools(probability: float = 0.5) -> RandomParamsGenerator[bool]:
     return oneof([False, True], [1 - probability, probability])
 
 
+@dataclass(frozen=True)
+class _Log:
+    gen: RandomParamsGenerator[float]
+
+    def get_random_params(self, rng: np.random.Generator) -> float:
+        return float(np.exp(self.gen.get_random_params(rng)))
+
+
 def uniform(
     low: float = 0.0, high: float = 1.0, *, log: bool = False
 ) -> RandomParamsGenerator[float]:
@@ -180,9 +187,18 @@ def uniform(
         return oneof([low])
 
     if log:
-        return _Scipy(stats.loguniform(low, high))
+        return _Log(_Uniform(np.log(low), np.log(high)))
 
-    return _Scipy(stats.uniform(low, high - low))
+    return _Uniform(low, high)
+
+
+@dataclass(frozen=True)
+class _Uniform:
+    low: float
+    high: float
+
+    def get_random_params(self, rng: np.random.Generator) -> float:
+        return rng.uniform(self.low, self.high)
 
 
 def normal(
@@ -210,15 +226,15 @@ def normal(
         if median <= 0:
             raise ValueError("invalid median")
 
-        return _Scipy(stats.lognorm(scale, scale=median))
-        # scale=median is NOT a bug!
+        return _Log(_Normal(np.log(median), scale))
 
-    return _Scipy(stats.norm(median, scale))
+    return _Normal(median, scale)
 
 
 @dataclass(frozen=True)
-class _Scipy:
-    dist: Any
+class _Normal:
+    median: float
+    std: float
 
     def get_random_params(self, rng: np.random.Generator) -> float:
-        return float(self.dist.rvs(random_state=rng))
+        return rng.normal(self.median, self.std)
