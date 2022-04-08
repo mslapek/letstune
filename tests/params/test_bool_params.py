@@ -40,3 +40,11 @@ def test_get_random_params() -> None:
 
     _, p_value = stats.chisquare([false_count, true_count])
     assert p_value > 0.1
+
+
+def test_to_json(params: SimpleBarParams) -> None:
+    assert params.to_json() == {"alpha": True, "beta": False}
+
+
+def test_from_json(params: SimpleBarParams) -> None:
+    assert SimpleBarParams.from_json({"alpha": True, "beta": False}) == params

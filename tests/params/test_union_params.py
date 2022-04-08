@@ -8,7 +8,7 @@ from pytest_mock import MockerFixture
 
 import letstune
 
-from .utils import ConstantRandomParamsGenerator
+from .utils import ConstantRandomParamsGenerator, assert_equal, assert_not_equal
 
 alpha_gen = ConstantRandomParamsGenerator(45)
 beta_gen = ConstantRandomParamsGenerator("hello")
@@ -129,8 +129,7 @@ def test_equality() -> None:
         zeta="orange",
     )
 
-    assert p1 == p2
-    assert not (p1 != p2)
+    assert_equal(p1, p2)
 
 
 def test_inequality() -> None:
@@ -150,8 +149,7 @@ def test_inequality() -> None:
         zeta="orange",
     )
 
-    assert p1 != p2
-    assert not (p1 == p2)
+    assert_not_equal(p1, p2)
 
 
 def test_get_random_params_nested1(mocker: MockerFixture) -> None:

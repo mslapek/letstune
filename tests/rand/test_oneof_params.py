@@ -2,6 +2,7 @@ import numpy as np
 
 import letstune
 from letstune import rand
+from letstune.rand import RandomParamsGenerator
 
 alpha_gen = rand.oneof([45])
 beta_gen = rand.oneof(["hello"])
@@ -25,7 +26,9 @@ def test_params_values(rng: np.random.Generator) -> None:
 
 
 def test_random_params(rng: np.random.Generator) -> None:
-    gen = rand.oneof([SimpleBarParams])
+    gen: RandomParamsGenerator[SimpleBarParams] = rand.oneof(
+        [SimpleBarParams]  # type: ignore
+    )
 
     sample = gen.get_random_params(rng)
 

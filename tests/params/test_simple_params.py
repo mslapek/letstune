@@ -1,4 +1,6 @@
+import dataclasses
 import pickle
+import re
 
 import numpy as np
 import pytest
@@ -6,7 +8,7 @@ from pytest_mock import MockerFixture
 
 import letstune
 
-from .utils import ConstantRandomParamsGenerator
+from .utils import ConstantRandomParamsGenerator, assert_equal, assert_not_equal
 
 alpha_gen = ConstantRandomParamsGenerator(45)
 beta_gen = ConstantRandomParamsGenerator("hello")
@@ -21,6 +23,9 @@ class SimpleBarParams(letstune.Params):
 
     def say_hello(self) -> str:
         return f"{self.beta}{self.alpha}"
+
+    def create_model(self) -> list[str]:
+        return ["123", self.beta]
 
 
 @pytest.fixture
@@ -44,16 +49,14 @@ def test_equality() -> None:
     p1 = SimpleBarParams(alpha=2, beta="qwerty", gamma=-10.0)
     p2 = SimpleBarParams(alpha=2, beta="qwerty", gamma=-10.0)
 
-    assert p1 == p2
-    assert not (p1 != p2)
+    assert_equal(p1, p2)
 
 
 def test_inequality() -> None:
     p1 = SimpleBarParams(alpha=2, beta="qwerty", gamma=-10.0)
     p2 = SimpleBarParams(alpha=2, beta="berty", gamma=-10.0)
 
-    assert p1 != p2
-    assert not (p1 == p2)
+    assert_not_equal(p1, p2)
 
 
 def test_get_random_params(mocker: MockerFixture) -> None:
@@ -102,10 +105,22 @@ def test_params_method(params: SimpleBarParams) -> None:
     assert v == "qwerty2"
 
 
+def test_params_create_model(params: SimpleBarParams) -> None:
+    v = params.create_model()
+
+    assert v == ["123", "qwerty"]
+
+
+def test_has_no_dict(params: SimpleBarParams) -> None:
+    assert not hasattr(params, "__dict__")
+
+
 def test_unexpected_init_keyword_argument() -> None:
     with pytest.raises(
         TypeError,
-        match=r"SimpleBarParams.__init__\(\) got an unexpected keyword argument 'zeta'",
+        match=re.escape(
+            "SimpleBarParams.__init__() got an unexpected keyword argument 'zeta'"
+        ),
     ):
         _ = SimpleBarParams(alpha=5, beta="red", gamma=3.14, zeta=99)
 
@@ -113,13 +128,29 @@ def test_unexpected_init_keyword_argument() -> None:
 def test_unexpected_init_positional_argument() -> None:
     with pytest.raises(
         TypeError,
-        match=r"Params.__init__\(\) takes 1 positional argument but 4 were given",
+        match=re.escape(
+            "Params.__init__() takes 1 positional argument but 4 were given"
+        ),
     ):
         _ = SimpleBarParams(5, "red", 3.14)  # type: ignore
 
 
 def test_missing_init_keyword_argument() -> None:
     with pytest.raises(
-        TypeError, match=r"SimpleBarParams.__init__\(\) missing keyword argument 'beta'"
+        TypeError,
+        match=re.escape(
+            "SimpleBarParams.__init__() missing 1 "
+            "required keyword-only argument: 'beta'"
+        ),
     ):
         _ = SimpleBarParams(alpha=5, gamma=3.14)
+
+
+def test_immutability(params: SimpleBarParams) -> None:
+    with pytest.raises(
+        dataclasses.FrozenInstanceError,
+        match=re.escape("cannot assign to field 'beta'"),
+    ):
+        params.beta = "circus"
+
+    assert params.beta == "qwerty"

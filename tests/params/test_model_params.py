@@ -1,4 +1,5 @@
 import pickle
+import re
 from typing import Any
 
 import numpy as np
@@ -7,7 +8,7 @@ from pytest_mock import MockerFixture
 
 import letstune
 
-from .utils import ConstantRandomParamsGenerator
+from .utils import ConstantRandomParamsGenerator, assert_equal, assert_not_equal
 
 
 class MyFooModel:
@@ -71,16 +72,14 @@ def test_equality() -> None:
     p1 = MyQwertyModelParams(alpha=2, beta="qwerty", gamma=-10.0)
     p2 = MyQwertyModelParams(alpha=2, beta="qwerty", gamma=-10.0)
 
-    assert p1 == p2
-    assert not (p1 != p2)
+    assert_equal(p1, p2)
 
 
 def test_inequality() -> None:
     p1 = MyQwertyModelParams(alpha=2, beta="qwerty", gamma=-10.0)
     p2 = MyQwertyModelParams(alpha=2, beta="berty", gamma=-10.0)
 
-    assert p1 != p2
-    assert not (p1 == p2)
+    assert_not_equal(p1, p2)
 
 
 def test_get_random_params(mocker: MockerFixture) -> None:
@@ -129,11 +128,17 @@ def test_params_method(params: MyQwertyModelParams) -> None:
     assert v == "qwerty2"
 
 
+def test_has_no_dict(params: MyQwertyModelParams) -> None:
+    assert not hasattr(params, "__dict__")
+
+
 def test_unexpected_init_keyword_argument() -> None:
     with pytest.raises(
         TypeError,
-        match=r"MyQwertyModelParams.__init__\(\) got "
-        r"an unexpected keyword argument 'zeta'",
+        match=re.escape(
+            "MyQwertyModelParams.__init__() got "
+            "an unexpected keyword argument 'zeta'"
+        ),
     ):
         _ = MyQwertyModelParams(alpha=5, beta="red", gamma=3.14, zeta=99)
 
@@ -141,7 +146,9 @@ def test_unexpected_init_keyword_argument() -> None:
 def test_unexpected_init_positional_argument() -> None:
     with pytest.raises(
         TypeError,
-        match=r"Params.__init__\(\) takes 1 positional argument but 4 were given",
+        match=re.escape(
+            "Params.__init__() takes 1 positional argument but 4 were given"
+        ),
     ):
         _ = MyQwertyModelParams(5, "red", 3.14)  # type: ignore
 
@@ -149,6 +156,27 @@ def test_unexpected_init_positional_argument() -> None:
 def test_missing_init_keyword_argument() -> None:
     with pytest.raises(
         TypeError,
-        match=r"MyQwertyModelParams.__init__\(\) missing keyword argument 'beta'",
+        match=re.escape(
+            "MyQwertyModelParams.__init__() missing 1 "
+            "required keyword-only argument: 'beta'"
+        ),
     ):
         _ = MyQwertyModelParams(alpha=5, gamma=3.14)
+
+
+def test_custom_create_model_is_forbidden() -> None:
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            """cannot override create_model. """
+            """Please use letstune.Params as the base:\n"""
+            """class MyFooParams(letstune.Params):\n"""
+            """    ...\n"""
+        ),
+    ):
+
+        class MyFooParams(letstune.ModelParams[MyFooModel]):
+            def create_model(self, x: int) -> MyFooModel:  # type: ignore
+                return MyFooModel(x=x, y=8)
+
+        _ = MyFooParams

@@ -5,6 +5,8 @@ import pytest
 
 import letstune
 
+from .utils import assert_equal
+
 
 class EmptyFooParams(letstune.Params):
     pass
@@ -28,8 +30,7 @@ def test_equality() -> None:
     p1 = EmptyFooParams()
     p2 = EmptyFooParams()
 
-    assert p1 == p2
-    assert not (p1 != p2)
+    assert_equal(p1, p2)
 
 
 def test_get_random_params() -> None:
@@ -59,6 +60,10 @@ def test_pickle(params: EmptyFooParams) -> None:
 
     assert isinstance(p2, EmptyFooParams)
     assert p2 == params
+
+
+def test_has_no_dict(params: EmptyFooParams) -> None:
+    assert not hasattr(params, "__dict__")
 
 
 def test_unexpected_init_keyword_argument() -> None:

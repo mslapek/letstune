@@ -249,17 +249,28 @@ def test_train_with_custom_scorer_as_str(mocker: MockerFixture) -> None:
 
 
 def test_create_model_kwargs(mocker: MockerFixture) -> None:
+    create_model_kwargs = []
+
+    class MyParams(letstune.Params):
+        x: int = rand.oneof([45])  # type: ignore
+
+        def create_model(self, **kwargs: Any) -> MyFooModel:
+            nonlocal create_model_kwargs
+            create_model_kwargs.append(kwargs)
+            return MyFooModel(
+                **self.to_dict(),
+                **kwargs,
+            )
+
     trainer = SklearnCVTrainer(
         MyParams, cv=3, create_model_kwargs={"color": "blue", "foo": 58}
     )
     trainer.load_dataset((np.eye(6), 2 * np.arange(6)))
     params = MyParams(x=12)
 
-    create_model_spy = mocker.spy(params, "create_model")
-
     _ = trainer.train(params)
 
-    create_model_spy.assert_called_once_with(color="blue", foo=58)
+    assert create_model_kwargs == [{"color": "blue", "foo": 58}]
 
 
 def test_fit_model_kwargs() -> None:

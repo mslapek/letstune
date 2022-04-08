@@ -75,14 +75,31 @@ def test_load_unpickles_model(mocker: MockerFixture) -> None:
     assert trainer.model == model
 
 
-def test_create_model_calls_params_create_model(mocker: MockerFixture) -> None:
-    params = SomeParams(x=913)
-    trainer = QwertyTrainer()
+def test_create_model_calls_params_create_model() -> None:
+    create_model_call_count = 0
 
-    create_model_spy = mocker.spy(params, "create_model")
+    class SomeParams2(letstune.Params):
+        x: int = rand.oneof([13])  # type: ignore
+
+        def create_model(self) -> Model:
+            nonlocal create_model_call_count
+            create_model_call_count += 1
+            return Model(self.x)
+
+    class QwertyTrainer2(EpochTrainer[SomeParams2]):
+        metric = letstune.Metric("accuracy")
+
+        def train_epoch(self, epoch: int) -> MetricValues:
+            return {}
+
+        def load_dataset(self, dataset: Any) -> None:
+            pass
+
+    params = SomeParams2(x=913)
+    trainer = QwertyTrainer2()
 
     trainer.create_model(params)
 
-    create_model_spy.assert_called_once_with()
+    assert create_model_call_count == 1
     assert isinstance(trainer.model, Model)
     assert trainer.model.x == 913

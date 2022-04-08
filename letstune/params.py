@@ -4,9 +4,10 @@ used to define hyper-parameters."""
 
 __all__ = ["Params", "ModelParams", "NoDefaultRandomGenerator"]
 
+import dataclasses
 import sys
 from types import UnionType
-from typing import Any, Generic, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, final
 
 import numpy as np
 
@@ -22,78 +23,121 @@ class NoDefaultRandomGenerator(Exception):
     cannot derive default implementation of
     ``get_random_params`` for the given class."""
 
+    def __init__(
+        self,
+        qualname: str,
+        field_name: str | None = None,
+    ) -> None:
+        msg = f"class {qualname} doesn't have default random generator"
+        if field_name is not None:
+            msg += f" for field {field_name}"
 
-def _ensure_annotations_exist(dct: dict[str, Any]) -> None:
-    if "__annotations__" not in dct:
-        dct["__annotations__"] = {}
+        super().__init__(msg)
 
 
-def _eval_annotations(dct: dict[str, Any]) -> None:
+def _pop_annotations(dct: dict[str, Any]) -> dict[str, Any]:
+    if "__annotations__" in dct:
+        return dct.pop("__annotations__")  # type: ignore
+    else:
+        return {}
+
+
+def _eval_annotations(
+    dct: dict[str, Any], annotations: dict[str, Any]
+) -> dict[str, type]:
     # compare with https://docs.python.org/3.10/howto/annotations.html
     globals_ = sys.modules[dct["__module__"]].__dict__
-    annotations = dct["__annotations__"]
 
-    for k, v in annotations.items():
-        if isinstance(v, str):
-            annotations[k] = eval(v, globals_)
+    return {
+        field_name: eval(field_type, globals_)
+        if isinstance(field_type, str)
+        else field_type
+        for field_name, field_type in annotations.items()
+    }
 
 
-def _get_slots(dct: dict[str, Any]) -> tuple[str, ...]:
-    return tuple(dct["__annotations__"])
+def _validate_field_type(field_name: str, field_type: type) -> None:
+    if isinstance(field_type, UnionType):
+        for tt in field_type.__args__:
+            if not issubclass(tt, Params):
+                raise TypeError(
+                    f"only Params are expected in "
+                    f"type union (got {tt.__qualname__})"
+                )
+    else:
+        valid_type = field_type in {int, float, str, bool} or issubclass(
+            field_type, Params
+        )
+
+        if not valid_type:
+            raise TypeError(
+                f"invalid type of {field_name} "
+                f"(expected int, float, str, bool or Params, "
+                f"got {field_type.__qualname__})"
+            )
 
 
 def _random_generator_from_type(t: type[T]) -> RandomParamsGenerator[T]:
-    def get_error_msg() -> str:
-        return f"Class {t.__qualname__} doesn't have default random generator"
-
     if isinstance(t, RandomParamsGenerator):
         return t
     if t is bool:
         return rand.bools()  # type: ignore
     if isinstance(t, UnionType):
+        return rand.oneof([_random_generator_from_type(tt) for tt in t.__args__])
+
+    raise NoDefaultRandomGenerator(t.__qualname__)
+
+
+def _pop_field(
+    dct: dict[str, Any], field_name: str, field_type: type
+) -> tuple[str, type, dataclasses.Field[Any]]:
+    metadata = {}
+    _validate_field_type(field_name, field_type)
+
+    if field_name in dct:
+        gen = dct.pop(field_name)
+    else:
         try:
-            gens = [_random_generator_from_type(tt) for tt in t.__args__]
-        except NoDefaultRandomGenerator as e:
-            raise NoDefaultRandomGenerator(
-                get_error_msg(),
-                e,
+            gen = _random_generator_from_type(field_type)
+        except NoDefaultRandomGenerator:
+            gen = None
+
+    if gen is not None:
+        metadata["gen"] = gen
+
+    return (field_name, field_type, dataclasses.field(metadata=metadata))
+
+
+def _validate_forbidden_methods(
+    name: str, dct: dict[str, Any], model_params: bool
+) -> None:
+    for k in dct:
+        if k in {
+            "__init__",
+            "__repr__",
+            "__str__",
+            "__eq__",
+            "to_json",
+            "from_json",
+            "to_dict",
+            "__setattr__",
+            "__getstate__",
+            "__setstate__",
+        }:
+            raise TypeError(f"cannot override {k}")
+        elif model_params and k == "create_model":
+            raise TypeError(
+                f"""cannot override create_model. """
+                f"""Please use letstune.Params as the base:\n"""
+                f"""class {name}(letstune.Params):\n"""
+                f"""    ...\n"""
             )
 
-        return rand.oneof(gens)
 
-    raise NoDefaultRandomGenerator(get_error_msg())
-
-
-def _get_random_generators(
-    dct: dict[str, Any]
-) -> dict[str, RandomParamsGenerator[Any]]:
-    annotations: Mapping[str, Any] = dct["__annotations__"]
-
-    gens = {}
-
-    for field_name, field_type in annotations.items():
-        if field_name in dct:
-            gen = dct[field_name]
-        else:
-            try:
-                gen = _random_generator_from_type(field_type)
-            except NoDefaultRandomGenerator as e:
-                raise NoDefaultRandomGenerator(
-                    f"Class {dct['__qualname__']} doesn't have "
-                    f"default random generator "
-                    f"for field {field_name}",
-                    e,
-                )
-
-        gens[field_name] = gen
-
-    return gens
-
-
-def _delete_random_generators(dct: dict[str, Any]) -> None:
-    for field in dct["__slots__"]:
-        if field in dct:
-            del dct[field]
+def _validate_leftover_generators(dct: dict[str, Any]) -> None:
+    for k, v in dct.items():
+        if isinstance(v, RandomParamsGenerator):
+            raise TypeError(f"{k} has no type annotation")
 
 
 def _assert_bases_are_valid(bases: tuple[Any, ...]) -> None:
@@ -105,8 +149,8 @@ def _assert_bases_are_valid(bases: tuple[Any, ...]) -> None:
 
     if not valid:
         raise TypeError(
-            f"Only letstune.Params and letstune.ModelParams "
-            f"are allowed as a base, got {bases}"
+            f"only letstune.Params and letstune.ModelParams "
+            f"are allowed as a base (got {bases})"
         )
 
 
@@ -125,52 +169,35 @@ class _ParamsMeta(type):
             return super().__new__(mcs, name, bases, dct)  # type: ignore
 
         _assert_bases_are_valid(bases)
-        _ensure_annotations_exist(dct)
-        _eval_annotations(dct)
+        annotations = _eval_annotations(
+            dct,
+            _pop_annotations(dct),
+        )
+        _validate_forbidden_methods(name, dct, bases[0] == ModelParams)
 
-        slots = _get_slots(dct)
-        dct["__slots__"] = slots
-        dct["__slots_set__"] = frozenset(slots)
-
-        random_generators: NoDefaultRandomGenerator | dict[
-            str, RandomParamsGenerator[Any]
+        fields = [
+            _pop_field(dct, field_name, field_type)
+            for field_name, field_type in annotations.items()
         ]
-        try:
-            random_generators = _get_random_generators(dct)
-        except NoDefaultRandomGenerator as e:
-            random_generators = e
-        dct["__random_generators__"] = random_generators
+        _validate_leftover_generators(dct)
 
-        _delete_random_generators(dct)
-
-        cls = super().__new__(mcs, name, bases, dct)  # type: ignore
-
-        return cls
-
-
-def _assert_dict_contains_all_fields(self: object, kwargs: dict[str, Any]) -> None:
-    field_names = self.__slots__
-    missing_args = [k for k in field_names if k not in kwargs]
-    if missing_args:
-        raise TypeError(
-            f"{type(self).__qualname__}.__init__() "
-            f"missing keyword argument {missing_args[0]!r}"
+        dataclass_cls = dataclasses.make_dataclass(
+            "_" + name,
+            fields,
+            frozen=True,
+            kw_only=True,
+            slots=True,
         )
+        bases = (*bases, dataclass_cls)
 
+        dct["__slots__"] = tuple()
 
-def _assert_field_is_expected(self: object, field_name: str) -> None:
-    fields: frozenset[str] = self.__slots_set__  # type: ignore
-
-    if field_name not in fields:
-        raise TypeError(
-            f"{type(self).__qualname__}.__init__() "
-            f"got an unexpected keyword argument {field_name!r}"
-        )
+        return super().__new__(mcs, name, bases, dct)  # type: ignore
 
 
 def _get_variant_name_from_json(json: Any) -> tuple[str, Any]:
     def raise_exception() -> None:
-        raise ValueError(f"Expected single-key dictionary, got {json!r}")
+        raise ValueError(f"expected single-key dictionary (got {json!r})")
 
     single_key_dict = isinstance(json, dict) and len(json) == 1
     if not single_key_dict:
@@ -190,7 +217,7 @@ def _get_field_type_from_union(field_type: UnionType, variant_name: str) -> type
         if candidate.__qualname__ == variant_name:
             return candidate
 
-    raise ValueError(f"Type name {variant_name!r} doesn't represent {field_type}")
+    raise ValueError(f"type name {variant_name!r} doesn't represent {field_type}")
 
 
 class Params(metaclass=_ParamsMeta):
@@ -284,12 +311,12 @@ class Params(metaclass=_ParamsMeta):
 
     """  # noqa
 
-    def __init__(self, **kwargs: Any):
-        _assert_dict_contains_all_fields(self, kwargs)
+    __slots__: tuple[str, ...] = tuple()
 
-        for field_name, field_value in kwargs.items():
-            _assert_field_is_expected(self, field_name)
-            setattr(self, field_name, field_value)
+    if TYPE_CHECKING:
+
+        def __init__(self, **kwargs: Any) -> None:
+            pass
 
     @classmethod
     def get_random_params(
@@ -321,31 +348,20 @@ class Params(metaclass=_ParamsMeta):
             rand.oneof([MyParams1, MyParams2, MyParams3])
 
         """
-        random_generators: NoDefaultRandomGenerator | dict[
-            str, RandomParamsGenerator[Any]
-        ] = cls.__random_generators__  # type: ignore
+        kwargs = {}
 
-        if isinstance(random_generators, Exception):
-            raise random_generators
+        for field in dataclasses.fields(cls):
+            gen = field.metadata.get("gen")
 
-        return cls(
-            **{f: g.get_random_params(rng) for f, g in random_generators.items()}
-        )
+            if gen is None:
+                raise NoDefaultRandomGenerator(cls.__qualname__, field.name)
 
-    def __repr__(self) -> str:
-        args = ", ".join(f"{f}={getattr(self, f)!r}" for f in self.__slots__)
-        return f"{type(self).__qualname__}({args})"
+            kwargs[field.name] = gen.get_random_params(rng)
 
-    def __eq__(self, other: object) -> bool:
-        if type(other) != type(self):
-            return False
+        return cls(**kwargs)
 
-        return all(getattr(self, f) == getattr(other, f) for f in self.__slots__)
-
-    def __field_to_json(self, field_name: str) -> Any:
-        field_value = getattr(self, field_name)
-        field_annotation = self.__annotations__[field_name]
-
+    def __field_to_json(self, field: dataclasses.Field[Any]) -> Any:
+        field_value = getattr(self, field.name)
         result: Any
 
         if isinstance(field_value, (int, float, str)):
@@ -353,11 +369,12 @@ class Params(metaclass=_ParamsMeta):
         else:
             result = field_value.to_json()
 
-        if isinstance(field_annotation, UnionType):
+        if isinstance(field.type, UnionType):
             result = {type(field_value).__qualname__: result}
 
         return result
 
+    @final
     def to_json(self) -> dict[str, Any]:
         """Converts given params to JSON.
 
@@ -422,11 +439,12 @@ class Params(metaclass=_ParamsMeta):
 
         """  # noqa
         return {
-            field_name: self.__field_to_json(field_name)
-            for field_name in self.__slots__
+            field.name: self.__field_to_json(field)
+            for field in dataclasses.fields(self)
         }
 
     @classmethod
+    @final
     def from_json(cls: type[SelfParams], json: Any) -> SelfParams:
         """Creates params instance from JSON, which was produced by ``to_json`` method.
 
@@ -449,15 +467,18 @@ class Params(metaclass=_ParamsMeta):
         >>> params
         DigitsTrainingParams(neural_network=NeuralNetworkParams(layer_number=5, channels=256), learning_rate=0.1)
 
+        *Warning*: ``from_json`` function *is not secure*.
+        If you do not trust the input data, please verify schema of the input JSON before calling ``from_json``.
         """  # noqa
         if not isinstance(json, dict):
-            raise TypeError(f"Expected dictionary, got {json=}")
+            raise TypeError(f"expected dictionary (got {json=})")
 
         args = {}
-        for field_name, field_type in cls.__annotations__.items():
-            json_value = json[field_name]
+        for field in dataclasses.fields(cls):
+            json_value = json[field.name]
+            field_type = field.type
 
-            if isinstance(field_type, UnionType):
+            if isinstance(field.type, UnionType):
                 variant_name, json_value = _get_variant_name_from_json(json_value)
                 field_type = _get_field_type_from_union(field_type, variant_name)
 
@@ -466,10 +487,11 @@ class Params(metaclass=_ParamsMeta):
             else:
                 field_value = json_value
 
-            args[field_name] = field_value
+            args[field.name] = field_value
 
         return cls(**args)
 
+    @final
     def to_dict(self) -> dict[str, Any]:
         """Converts given params to a dict.
 
@@ -494,7 +516,7 @@ class Params(metaclass=_ParamsMeta):
         >>> params.to_dict()
         {'neural_network': NeuralNetworkParams(layer_number=5, channels=256), 'learning_rate': 0.1}
         """  # noqa
-        return {f: getattr(self, f) for f in self.__slots__}
+        return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
 
 
 M = TypeVar("M")
@@ -559,6 +581,9 @@ class ModelParams(Generic[M], Params):
 
     """  # noqa
 
+    __slots__: tuple[str, ...] = tuple()
+
+    @final
     def create_model(self, **kwargs: Any) -> M:
         """For a class inheriting from ``ModelParams[M]``,
         it returns a model of type ``M``.
