@@ -5,9 +5,29 @@ if [ -z "$TEST_TENSORFLOW" ]; then
   export TEST_TENSORFLOW=0
 fi
 
+if [ -z "$TEST_XGBOOST" ]; then
+  export TEST_XGBOOST=0
+fi
+
 isort --check letstune tests examples
 black --check letstune tests examples
-mypy letstune tests examples
+
+## mypy ##
+
+mypy_args="letstune tests examples/sklearn"
+
+if [ "$TEST_TENSORFLOW" -ne 0 ]; then
+  mypy_args="${mypy_args} examples/keras"
+fi
+
+if [ "$TEST_XGBOOST" -ne 0 ]; then
+  mypy_args="${mypy_args} examples/xgboost"
+fi
+
+mypy $mypy_args
+
+## end mypy ##
+
 flake8 letstune tests examples
 
 ## pytest ##
@@ -20,6 +40,8 @@ fi
 
 pytest $pytest_args
 
+## end pytest ##
+
 ## pytest examples ##
 
 examples_to_test="examples/sklearn/*.py"
@@ -28,6 +50,12 @@ if [ "$TEST_TENSORFLOW" -ne 0 ]; then
   examples_to_test="${examples_to_test} examples/keras/*.py"
 fi
 
+if [ "$TEST_XGBOOST" -ne 0 ]; then
+  examples_to_test="${examples_to_test} examples/xgboost/*.py"
+fi
+
 pytest $examples_to_test
+
+## end pytest examples ##
 
 echo "Lint OK!"
