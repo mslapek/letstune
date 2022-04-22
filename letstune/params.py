@@ -118,6 +118,7 @@ def _validate_forbidden_methods(
             "__str__",
             "__eq__",
             "to_json",
+            "_to_json",
             "from_json",
             "to_dict",
             "__setattr__",
@@ -360,7 +361,9 @@ class Params(metaclass=_ParamsMeta):
 
         return cls(**kwargs)
 
-    def __field_to_json(self, field: dataclasses.Field[Any]) -> Any:
+    def __field_to_json(
+        self, field: dataclasses.Field[Any], add_union_type: bool
+    ) -> Any:
         field_value = getattr(self, field.name)
         result: Any
 
@@ -370,7 +373,13 @@ class Params(metaclass=_ParamsMeta):
             result = field_value.to_json()
 
         if isinstance(field.type, UnionType):
-            result = {type(field_value).__qualname__: result}
+            type_name = type(field_value).__qualname__
+            d = {type_name: result}
+
+            if add_union_type:
+                d["type"] = type_name
+
+            result = d
 
         return result
 
@@ -438,8 +447,12 @@ class Params(metaclass=_ParamsMeta):
         }
 
         """  # noqa
+        return self._to_json()
+
+    @final
+    def _to_json(self, *, add_union_type: bool = False) -> dict[str, Any]:
         return {
-            field.name: self.__field_to_json(field)
+            field.name: self.__field_to_json(field, add_union_type)
             for field in dataclasses.fields(self)
         }
 

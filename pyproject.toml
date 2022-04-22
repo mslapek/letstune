@@ -7,6 +7,7 @@ authors = ["Michał Słapek <28485371+mslapek@users.noreply.github.com>"]
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 numpy = "^1.22.3"
+pandas = "^1.4.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"

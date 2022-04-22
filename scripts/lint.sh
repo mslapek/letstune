@@ -11,6 +11,7 @@ fi
 
 isort --check letstune tests examples
 black --check letstune tests examples
+flake8 letstune tests examples
 
 ## mypy ##
 
@@ -27,8 +28,6 @@ fi
 mypy $mypy_args
 
 ## end mypy ##
-
-flake8 letstune tests examples
 
 ## pytest ##
 

@@ -152,6 +152,7 @@ def test_invalid_params_type() -> None:
             "__str__",
             "__eq__",
             "to_json",
+            "_to_json",
             "from_json",
             "to_dict",
             "__setattr__",
