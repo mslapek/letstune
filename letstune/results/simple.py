@@ -20,21 +20,23 @@ To unpickle the best model::
     model = chk.load_pickle()
 
 """
-
+import json
+import operator
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Generic, Mapping, Protocol, TypeVar
+from typing import Any, Generic, Protocol, Sequence, TypeVar
 
 from letstune import Metric, Params
+from letstune.backend import repo
 
 from . import _base
 
 __all__ = [
     "CheckpointFactory",
     "Training",
-    "TuningResults",
-    "Builder",
+    "Error",
+    "build",
 ]
+
 
 P = TypeVar("P", bound=Params)
 
@@ -77,64 +79,89 @@ class Training(_base.TrainingStats, Generic[P]):
         return f"<Training {self.training_id}; metric_value={self.metric_value}>"
 
 
-class TuningResults(_base.TuningResults[P, Training[P]]):
+@dataclass(kw_only=True, slots=True, frozen=True)
+class Error(_base.Error):
+    pass
+
+
+class TuningResults(_base.TuningResults[P, Training[P], Error]):
     """Results of simple training.
 
     List of :class:`Training` objects, each representing one :class:`Params`.
     """
 
-    pass
+
+def _build_training(
+    metric: Metric,
+    checkpoint_factory: CheckpointFactory,
+    params_cls: type[P],
+    training: repo.Training,
+) -> Training[P]:
+    epoch = training.epochs[0]
+
+    t: Training[P] = Training()
+    object.__setattr__(t, "training_id", training.training_id)
+    object.__setattr__(t, "params", params_cls.from_json(json.loads(training.params)))
+    object.__setattr__(t, "start_time", epoch.start_time)
+    object.__setattr__(t, "end_time", epoch.end_time)
+    object.__setattr__(
+        t, "metric_values", _base.freeze_metric_values(epoch.metric_values)
+    )
+    object.__setattr__(t, "metric_value", epoch.metric_values[metric.name])
+    object.__setattr__(t, "_checkpoint_factory", checkpoint_factory)
+
+    return t
 
 
-class Builder(Generic[P]):
-    """Builder of :class:`TuningResults`. Only for *custom backend* developers.
+def build(
+    *,
+    metric: Metric,
+    checkpoint_factory: CheckpointFactory,
+    params_cls: type[P],
+    trainings: Sequence[repo.Training],
+) -> TuningResults[P]:
+    """Build :class:`TuningResults`. Only for *custom backend* developers."""
 
-    The builder is called repeatedly with ``add_training``.
-    Finally, call ``build`` to get :class:`TuningResults`.
-    """
+    if len(trainings) == 0:
+        raise ValueError("tuning must have at least one training")
 
-    def __init__(
-        self,
-        *,
-        metric: Metric,
-        checkpoint_factory: CheckpointFactory,
-    ):
-        self._metric = metric
-        self._checkpoint_factory = checkpoint_factory
+    valid_ts: list[Training[P]] = []
+    errors: list[Error] = []
+    for t in trainings:
+        if t.error is None and len(t.epochs) == 1:
+            valid_ts.append(
+                _build_training(
+                    metric,
+                    checkpoint_factory,
+                    params_cls,
+                    t,
+                )
+            )
+        else:
+            error = t.error
 
-        self._trainings: list[Training[P]] = []
+            if error is None:
+                if len(t.epochs) != 1:
+                    error = "no trainings"
+                else:
+                    error = "unknown"
 
-    def add_training(
-        self,
-        params: P,
-        *,
-        start_time: datetime,
-        end_time: datetime,
-        metric_values: Mapping[str, float],
-    ) -> None:
-        t: Training[P] = Training()
-        object.__setattr__(t, "training_id", len(self._trainings))
-        object.__setattr__(t, "params", params)
-        object.__setattr__(t, "start_time", start_time)
-        object.__setattr__(t, "end_time", end_time)
-        object.__setattr__(
-            t, "metric_values", _base.freeze_metric_values(metric_values)
-        )
-        object.__setattr__(t, "metric_value", metric_values[self._metric.name])
-        object.__setattr__(t, "_checkpoint_factory", self._checkpoint_factory)
+            errors.append(
+                Error(
+                    training_id=t.training_id,
+                    params=t.params,
+                    msg=error,
+                )
+            )
 
-        self._trainings.append(t)
+    valid_ts.sort(
+        key=operator.attrgetter("metric_value"),
+        reverse=metric.greater_is_better,
+    )
 
-    def build(self) -> TuningResults[P]:
-        """Get new :class:`TuningResults`."""
+    r: TuningResults[P] = TuningResults()
+    r._sequence = tuple(valid_ts)
+    r._metric = metric
+    r._errors = tuple(errors)
 
-        if len(self._trainings) == 0:
-            raise ValueError("tuning must have at least one training")
-
-        r: TuningResults[P] = TuningResults()
-        r._sequence = tuple(self._trainings)
-        r._metric = self._metric
-
-        self._trainings.clear()
-
-        return r
+    return r

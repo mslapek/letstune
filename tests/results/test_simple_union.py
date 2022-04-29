@@ -1,3 +1,4 @@
+import json
 import math
 from datetime import datetime
 
@@ -7,6 +8,7 @@ import pytest
 from pandas import Timedelta, Timestamp
 
 import letstune
+from letstune.backend import repo
 from letstune.results import simple
 
 from . import utils
@@ -17,47 +19,73 @@ METRIC = letstune.Metric("accuracy")
 
 @pytest.fixture
 def tuning_results() -> simple.TuningResults[UnionModelParams]:
-    builder: simple.Builder[UnionModelParams] = simple.Builder(
-        metric=METRIC, checkpoint_factory=utils.SimpleCheckpointFactory()
+    return simple.build(
+        metric=METRIC,
+        checkpoint_factory=utils.SimpleCheckpointFactory(),
+        params_cls=UnionModelParams,
+        trainings=[
+            repo.Training(
+                training_id=101,
+                params=json.dumps(
+                    UnionModelParams(
+                        optimizer=OptimizerParams(alpha=1, beta=3.3, gamma="hello"),
+                        zeta=1111.11,
+                    ).to_json()
+                ),
+                epochs=[
+                    repo.EpochStats(
+                        epoch_id=0,
+                        start_time=datetime(2022, 10, 1, 10, 0, 0),
+                        end_time=datetime(2022, 10, 1, 10, 2, 0),
+                        metric_values={
+                            "f_score": 0.8,
+                            "accuracy": 0.4,
+                        },
+                    )
+                ],
+            ),
+            repo.Training(
+                training_id=103,
+                params=json.dumps(
+                    UnionModelParams(
+                        optimizer=OptimizerParams(alpha=3, beta=5.1, gamma="hi"),
+                        zeta=-99.0,
+                    ).to_json()
+                ),
+                epochs=[
+                    repo.EpochStats(
+                        epoch_id=0,
+                        start_time=datetime(2022, 10, 1, 10, 1, 0),
+                        end_time=datetime(2022, 10, 1, 10, 5, 0),
+                        metric_values={
+                            "f_score": 0.1,
+                            "accuracy": 0.2,
+                        },
+                    )
+                ],
+            ),
+            repo.Training(
+                training_id=102,
+                params=json.dumps(
+                    UnionModelParams(
+                        optimizer=AnotherOptimizerParams(gamma="moo", epsilon=3.3),
+                        zeta=9.99,
+                    ).to_json()
+                ),
+                epochs=[
+                    repo.EpochStats(
+                        epoch_id=0,
+                        start_time=datetime(2022, 10, 1, 11, 0, 0),
+                        end_time=datetime(2022, 10, 1, 12, 0, 0),
+                        metric_values={
+                            "f_score": 0.4,
+                            "accuracy": 0.3,
+                        },
+                    ),
+                ],
+            ),
+        ],
     )
-
-    builder.add_training(
-        UnionModelParams(
-            optimizer=OptimizerParams(alpha=1, beta=3.3, gamma="hello"), zeta=1111.11
-        ),
-        start_time=datetime(2022, 10, 1, 10, 0, 0),
-        end_time=datetime(2022, 10, 1, 10, 2, 0),
-        metric_values={
-            "f_score": 0.8,
-            "accuracy": 0.4,
-        },
-    )
-
-    builder.add_training(
-        UnionModelParams(
-            optimizer=OptimizerParams(alpha=3, beta=5.1, gamma="hi"), zeta=-99.0
-        ),
-        start_time=datetime(2022, 10, 1, 10, 1, 0),
-        end_time=datetime(2022, 10, 1, 10, 5, 0),
-        metric_values={
-            "f_score": 0.1,
-            "accuracy": 0.2,
-        },
-    )
-
-    builder.add_training(
-        UnionModelParams(
-            optimizer=AnotherOptimizerParams(gamma="moo", epsilon=3.3), zeta=9.99
-        ),
-        start_time=datetime(2022, 10, 1, 11, 0, 0),
-        end_time=datetime(2022, 10, 1, 12, 0, 0),
-        metric_values={
-            "f_score": 0.4,
-            "accuracy": 0.3,
-        },
-    )
-
-    return builder.build()
 
 
 def test_to_df(tuning_results: simple.TuningResults[UnionModelParams]) -> None:
@@ -84,6 +112,7 @@ def test_to_df(tuning_results: simple.TuningResults[UnionModelParams]) -> None:
 
     expected_df = pd.DataFrame(
         {
+            "training_id": [101, 102, 103],
             "duration": [
                 Timedelta("0 days 00:02:00"),
                 Timedelta("0 days 01:00:00"),
@@ -112,7 +141,6 @@ def test_to_df(tuning_results: simple.TuningResults[UnionModelParams]) -> None:
                 Timestamp("2022-10-01 11:00:00"),
                 Timestamp("2022-10-01 10:01:00"),
             ],
-            "training_id": [0, 2, 1],
         },
     )
 

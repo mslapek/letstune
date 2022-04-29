@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 from types import MappingProxyType
 
@@ -7,6 +8,7 @@ import pytest
 from pandas import Timedelta, Timestamp
 
 import letstune
+from letstune.backend import repo
 from letstune.results import simple
 
 from . import utils
@@ -17,47 +19,108 @@ METRIC = letstune.Metric("accuracy")
 
 @pytest.fixture
 def tuning_results() -> simple.TuningResults[ModelParams]:
-    builder: simple.Builder[ModelParams] = simple.Builder(
-        metric=METRIC, checkpoint_factory=utils.SimpleCheckpointFactory()
+    return simple.build(
+        metric=METRIC,
+        checkpoint_factory=utils.SimpleCheckpointFactory(),
+        params_cls=ModelParams,
+        trainings=[
+            repo.Training(
+                training_id=4,
+                params=json.dumps(
+                    ModelParams(
+                        optimizer=OptimizerParams(alpha=1, beta=3.3, gamma="hello"),
+                        zeta=1111.11,
+                    ).to_json()
+                ),
+                epochs=[
+                    repo.EpochStats(
+                        epoch_id=0,
+                        start_time=datetime(2022, 10, 1, 10, 0, 0),
+                        end_time=datetime(2022, 10, 1, 10, 2, 0),
+                        metric_values={
+                            "f_score": 0.8,
+                            "accuracy": 0.4,
+                        },
+                    )
+                ],
+            ),
+            repo.Training(
+                training_id=45,
+                params=json.dumps(
+                    ModelParams(
+                        optimizer=OptimizerParams(alpha=3, beta=5.1, gamma="hi"),
+                        zeta=-99.0,
+                    ).to_json()
+                ),
+                epochs=[
+                    repo.EpochStats(
+                        epoch_id=0,
+                        start_time=datetime(2022, 10, 1, 10, 1, 0),
+                        end_time=datetime(2022, 10, 1, 10, 5, 0),
+                        metric_values={
+                            "f_score": 0.1,
+                            "accuracy": 0.2,
+                        },
+                    )
+                ],
+            ),
+            repo.Training(
+                training_id=99,
+                params=json.dumps(
+                    ModelParams(
+                        optimizer=OptimizerParams(
+                            alpha=123, beta=567.567, gamma="magnificent"
+                        ),
+                        zeta=9.99,
+                    ).to_json()
+                ),
+                epochs=[
+                    repo.EpochStats(
+                        epoch_id=0,
+                        start_time=datetime(2022, 10, 1, 11, 0, 0),
+                        end_time=datetime(2022, 10, 1, 12, 0, 0),
+                        metric_values={
+                            "f_score": 0.4,
+                            "accuracy": 0.9,
+                        },
+                    )
+                ],
+                error="stack overflow",
+            ),
+            repo.Training(
+                training_id=5,
+                params=json.dumps(
+                    ModelParams(
+                        optimizer=OptimizerParams(alpha=123, beta=567.567, gamma="moo"),
+                        zeta=9.99,
+                    ).to_json()
+                ),
+                epochs=[
+                    repo.EpochStats(
+                        epoch_id=0,
+                        start_time=datetime(2022, 10, 1, 11, 0, 0),
+                        end_time=datetime(2022, 10, 1, 12, 0, 0),
+                        metric_values={
+                            "f_score": 0.4,
+                            "accuracy": 0.3,
+                        },
+                    )
+                ],
+            ),
+            repo.Training(
+                training_id=9792,
+                params=json.dumps(
+                    ModelParams(
+                        optimizer=OptimizerParams(
+                            alpha=123, beta=567.567, gamma="keyboard"
+                        ),
+                        zeta=9.99,
+                    ).to_json()
+                ),
+                epochs=[],
+            ),
+        ],
     )
-
-    builder.add_training(
-        ModelParams(
-            optimizer=OptimizerParams(alpha=1, beta=3.3, gamma="hello"), zeta=1111.11
-        ),
-        start_time=datetime(2022, 10, 1, 10, 0, 0),
-        end_time=datetime(2022, 10, 1, 10, 2, 0),
-        metric_values={
-            "f_score": 0.8,
-            "accuracy": 0.4,
-        },
-    )
-
-    builder.add_training(
-        ModelParams(
-            optimizer=OptimizerParams(alpha=3, beta=5.1, gamma="hi"), zeta=-99.0
-        ),
-        start_time=datetime(2022, 10, 1, 10, 1, 0),
-        end_time=datetime(2022, 10, 1, 10, 5, 0),
-        metric_values={
-            "f_score": 0.1,
-            "accuracy": 0.2,
-        },
-    )
-
-    builder.add_training(
-        ModelParams(
-            optimizer=OptimizerParams(alpha=123, beta=567.567, gamma="moo"), zeta=9.99
-        ),
-        start_time=datetime(2022, 10, 1, 11, 0, 0),
-        end_time=datetime(2022, 10, 1, 12, 0, 0),
-        metric_values={
-            "f_score": 0.4,
-            "accuracy": 0.3,
-        },
-    )
-
-    return builder.build()
 
 
 def test_len(tuning_results: simple.TuningResults[ModelParams]) -> None:
@@ -68,7 +131,7 @@ def test_get_item(tuning_results: simple.TuningResults[ModelParams]) -> None:
     training = tuning_results[1]
 
     assert isinstance(training, simple.Training)
-    assert training.training_id == 1
+    assert training.training_id == 5
 
 
 def test_get_item_slice(tuning_results: simple.TuningResults[ModelParams]) -> None:
@@ -77,12 +140,22 @@ def test_get_item_slice(tuning_results: simple.TuningResults[ModelParams]) -> No
     assert len(trainings) == 2
     assert isinstance(trainings, list)
     assert isinstance(trainings[0], simple.Training)
-    assert trainings[0].training_id == 1
+    assert trainings[0].training_id == 5
+
+
+def test_sorted_trainings(tuning_results: simple.TuningResults[ModelParams]) -> None:
+    ids = [t.training_id for t in tuning_results]
+    assert ids == [4, 5, 45]
+
+
+def test_metric_value(tuning_results: simple.TuningResults[ModelParams]) -> None:
+    assert tuning_results.metric_value == 0.4
 
 
 def test_training(tuning_results: simple.TuningResults[ModelParams]) -> None:
-    training = tuning_results[1]
+    training = tuning_results[2]
 
+    assert training.training_id == 45
     assert training.params == ModelParams(
         optimizer=OptimizerParams(alpha=3, beta=5.1, gamma="hi"), zeta=-99.0
     )
@@ -95,45 +168,36 @@ def test_training(tuning_results: simple.TuningResults[ModelParams]) -> None:
         }
     )
 
+    assert training.metric_value == 0.2
+
 
 def test_duration(tuning_results: simple.TuningResults[ModelParams]) -> None:
-    training = tuning_results[1]
+    training = tuning_results[2]
 
     assert training.duration == timedelta(minutes=4)
 
 
 def test_checkpoint(tuning_results: simple.TuningResults[ModelParams]) -> None:
-    training = tuning_results[1]
+    training = tuning_results[2]
 
     checkpoint = training.checkpoint
 
-    assert checkpoint == utils.SimpleCheckpoint(training_id=1)
+    assert checkpoint == utils.SimpleCheckpoint(training_id=45)
 
 
-def test_metric_value(tuning_results: simple.TuningResults[ModelParams]) -> None:
-    training = tuning_results[1]
+def test_training_metric_value(
+    tuning_results: simple.TuningResults[ModelParams],
+) -> None:
+    training = tuning_results[2]
 
     assert training.metric_value == 0.2
-
-
-def test_best_training(tuning_results: simple.TuningResults[ModelParams]) -> None:
-    best_training = tuning_results.best_training
-
-    assert best_training.training_id == 0
-
-
-def test_sorted_trainings(tuning_results: simple.TuningResults[ModelParams]) -> None:
-    trainings = tuning_results.sorted_trainings()
-
-    ids = [t.training_id for t in trainings]
-    assert ids == [0, 2, 1]
 
 
 @pytest.mark.parametrize(
     "n,expected_ids",
     [
-        (2, [0, 2]),
-        (10, [0, 2, 1]),
+        (2, [4, 5]),
+        (10, [4, 5, 45]),
         (0, []),
     ],
 )
@@ -142,7 +206,7 @@ def test_top_trainings(
     n: int,
     expected_ids: list[int],
 ) -> None:
-    trainings = tuning_results.top_trainings(n)
+    trainings = tuning_results[:n]
 
     ids = [t.training_id for t in trainings]
     assert ids == expected_ids
@@ -150,6 +214,37 @@ def test_top_trainings(
 
 def test_metric(tuning_results: simple.TuningResults[ModelParams]) -> None:
     assert tuning_results.metric == METRIC
+
+
+def test_errors(tuning_results: simple.TuningResults[ModelParams]) -> None:
+    errors = tuning_results.errors
+
+    assert errors == (
+        simple.Error(
+            training_id=99,
+            params=json.dumps(
+                ModelParams(
+                    optimizer=OptimizerParams(
+                        alpha=123, beta=567.567, gamma="magnificent"
+                    ),
+                    zeta=9.99,
+                ).to_json()
+            ),
+            msg="stack overflow",
+        ),
+        simple.Error(
+            training_id=9792,
+            params=json.dumps(
+                ModelParams(
+                    optimizer=OptimizerParams(
+                        alpha=123, beta=567.567, gamma="keyboard"
+                    ),
+                    zeta=9.99,
+                ).to_json()
+            ),
+            msg="no trainings",
+        ),
+    )
 
 
 def test_to_df(tuning_results: simple.TuningResults[ModelParams]) -> None:
@@ -170,7 +265,7 @@ def test_to_df(tuning_results: simple.TuningResults[ModelParams]) -> None:
     }
 
     assert df.to_dict("list") == {
-        "training_id": [0, 2, 1],
+        "training_id": [4, 5, 45],
         "start_time": [
             Timestamp("2022-10-01 10:00:00"),
             Timestamp("2022-10-01 11:00:00"),

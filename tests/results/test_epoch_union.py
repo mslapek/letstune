@@ -1,3 +1,4 @@
+import json
 import math
 from datetime import datetime, timedelta
 
@@ -7,6 +8,8 @@ import pytest
 from pandas import Timedelta, Timestamp
 
 import letstune
+from letstune.backend import repo
+from letstune.backend.scheduler.epoch import Config
 from letstune.results import epoch, simple
 
 from . import utils
@@ -17,99 +20,108 @@ METRIC = letstune.Metric("accuracy")
 
 @pytest.fixture
 def tuning_results() -> epoch.TuningResults[UnionModelParams]:
-    builder: epoch.Builder[UnionModelParams] = epoch.Builder(
+    trainings = [
+        repo.Training(
+            training_id=10,
+            params=json.dumps(
+                UnionModelParams(
+                    optimizer=OptimizerParams(alpha=1, beta=3.3, gamma="hello"),
+                    zeta=1111.11,
+                ).to_json()
+            ),
+            epochs=[
+                repo.EpochStats(
+                    epoch_id=0,
+                    start_time=datetime(2022, 10, 1, 10, 0, 0),
+                    end_time=datetime(2022, 10, 1, 10, 2, 0),
+                    metric_values={
+                        "f_score": 0.1,
+                        "accuracy": 0.2,
+                    },
+                ),
+                repo.EpochStats(
+                    epoch_id=1,
+                    start_time=datetime(2022, 10, 1, 10, 2, 0),
+                    end_time=datetime(2022, 10, 1, 10, 4, 0),
+                    metric_values={
+                        "f_score": 0.5,
+                        "accuracy": 0.7,
+                    },
+                ),
+                repo.EpochStats(
+                    epoch_id=2,
+                    start_time=datetime(2022, 10, 1, 10, 10, 0),
+                    end_time=datetime(2022, 10, 1, 10, 11, 0),
+                    metric_values={
+                        "f_score": 0.3,
+                        "accuracy": 0.5,
+                    },
+                ),
+            ],
+        ),
+        repo.Training(
+            training_id=4,
+            params=json.dumps(
+                UnionModelParams(
+                    optimizer=AnotherOptimizerParams(gamma="moo", epsilon=3.3),
+                    zeta=-99.0,
+                ).to_json()
+            ),
+            epochs=[
+                repo.EpochStats(
+                    epoch_id=0,
+                    start_time=datetime(2022, 10, 1, 15, 0, 0),
+                    end_time=datetime(2022, 10, 1, 15, 2, 0),
+                    metric_values={
+                        "f_score": 0.1,
+                        "accuracy": 0.2,
+                    },
+                ),
+                repo.EpochStats(
+                    epoch_id=1,
+                    start_time=datetime(2022, 10, 1, 15, 2, 0),
+                    end_time=datetime(2022, 10, 1, 15, 4, 0),
+                    metric_values={
+                        "f_score": 0.5,
+                        "accuracy": 0.3,
+                    },
+                ),
+                repo.EpochStats(
+                    epoch_id=2,
+                    start_time=datetime(2022, 10, 1, 15, 10, 0),
+                    end_time=datetime(2022, 10, 1, 15, 11, 0),
+                    metric_values={
+                        "f_score": 0.8,
+                        "accuracy": 0.6,
+                    },
+                ),
+                repo.EpochStats(
+                    epoch_id=3,
+                    start_time=datetime(2022, 10, 1, 15, 12, 0),
+                    end_time=datetime(2022, 10, 1, 15, 14, 0),
+                    metric_values={
+                        "f_score": 0.8,
+                        "accuracy": 0.65,
+                    },
+                ),
+            ],
+        ),
+    ]
+
+    return epoch.build(
         metric=METRIC,
         checkpoint_factory=utils.EpochCheckpointFactory(),
-        round_assigner=utils.RoundAssigner(
-            {
-                timedelta(minutes=2): 0,
-                timedelta(minutes=4): 1,
-                timedelta(minutes=5): 5,
-                timedelta(minutes=7): 99,
-            }
+        config=Config(
+            round_durations=[
+                timedelta(minutes=1),
+                timedelta(minutes=2),
+                timedelta(minutes=4),
+            ],
+            trainings_reduction=2.0,
         ),
+        params_cls=UnionModelParams,
+        trainings=trainings,
     )
-
-    epoch_builder = builder.add_training(
-        UnionModelParams(
-            optimizer=OptimizerParams(alpha=1, beta=3.3, gamma="hello"), zeta=1111.11
-        )
-    )
-
-    epoch_builder.add_epoch(
-        start_time=datetime(2022, 10, 1, 10, 0, 0),
-        end_time=datetime(2022, 10, 1, 10, 2, 0),
-        metric_values={
-            "f_score": 0.1,
-            "accuracy": 0.2,
-        },
-    )
-
-    epoch_builder.add_epoch(
-        start_time=datetime(2022, 10, 1, 10, 2, 0),
-        end_time=datetime(2022, 10, 1, 10, 4, 0),
-        metric_values={
-            "f_score": 0.5,
-            "accuracy": 0.7,
-        },
-    )
-
-    epoch_builder.add_epoch(
-        start_time=datetime(2022, 10, 1, 10, 10, 0),
-        end_time=datetime(2022, 10, 1, 10, 11, 0),
-        metric_values={
-            "f_score": 0.3,
-            "accuracy": 0.5,
-        },
-    )
-
-    epoch_builder.build()
-
-    epoch_builder = builder.add_training(
-        UnionModelParams(
-            optimizer=AnotherOptimizerParams(gamma="moo", epsilon=3.3), zeta=-99.0
-        ),
-    )
-
-    epoch_builder.add_epoch(
-        start_time=datetime(2022, 10, 1, 15, 0, 0),
-        end_time=datetime(2022, 10, 1, 15, 2, 0),
-        metric_values={
-            "f_score": 0.1,
-            "accuracy": 0.2,
-        },
-    )
-
-    epoch_builder.add_epoch(
-        start_time=datetime(2022, 10, 1, 15, 2, 0),
-        end_time=datetime(2022, 10, 1, 15, 4, 0),
-        metric_values={
-            "f_score": 0.5,
-            "accuracy": 0.3,
-        },
-    )
-
-    epoch_builder.add_epoch(
-        start_time=datetime(2022, 10, 1, 15, 10, 0),
-        end_time=datetime(2022, 10, 1, 15, 11, 0),
-        metric_values={
-            "f_score": 0.8,
-            "accuracy": 0.6,
-        },
-    )
-
-    epoch_builder.add_epoch(
-        start_time=datetime(2022, 10, 1, 15, 12, 0),
-        end_time=datetime(2022, 10, 1, 15, 14, 0),
-        metric_values={
-            "f_score": 0.8,
-            "accuracy": 0.65,
-        },
-    )
-
-    epoch_builder.build()
-
-    return builder.build()
 
 
 def test_to_df(tuning_results: simple.TuningResults[UnionModelParams]) -> None:
@@ -141,7 +153,8 @@ def test_to_df(tuning_results: simple.TuningResults[UnionModelParams]) -> None:
 
     expected_df = pd.DataFrame(
         {
-            "training_id": [0, 1],
+            "training_id": [10, 4],
+            "round": [2, 0],
             "start_time": [
                 Timestamp("2022-10-01 10:00:00"),
                 Timestamp("2022-10-01 15:00:00"),
@@ -153,7 +166,6 @@ def test_to_df(tuning_results: simple.TuningResults[UnionModelParams]) -> None:
             "duration": [Timedelta("0 days 00:05:00"), Timedelta("0 days 00:07:00")],
             "epochs": [3, 4],
             "best_epoch": [1, 3],
-            "round": [5, 99],
             "params.optimizer.OptimizerParams.alpha": [1.0, nan],
             "params.optimizer.OptimizerParams.beta": [3.3, nan],
             "params.optimizer.OptimizerParams.gamma": ["hello", nan],

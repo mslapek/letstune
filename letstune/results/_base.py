@@ -1,4 +1,3 @@
-import operator
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from types import MappingProxyType
@@ -22,7 +21,6 @@ class SequenceProxy(Sequence[T]):
     __slots__: tuple[str, ...] = ()
 
     _sequence: tuple[T, ...]
-    _metric: Metric
 
     @overload
     def __getitem__(self, indices: int) -> T:
@@ -43,13 +41,6 @@ class SequenceProxy(Sequence[T]):
     def __len__(self) -> int:
         return len(self._sequence)
 
-    def _best(self) -> T:
-        cmp = max if self._metric.greater_is_better else min
-        return cmp(
-            self,
-            key=operator.attrgetter("metric_value"),
-        )
-
 
 @dataclass(init=False, repr=False, eq=False, slots=True, frozen=True)
 class TrainingStats:
@@ -64,24 +55,19 @@ class TrainingStats:
         return self.end_time - self.start_time
 
 
-class TuningResults(SequenceProxy[T], Generic[P, T]):
-    @property
-    def best_training(self) -> T:
-        """The best training in the tuning."""
-        return self._best()
+@dataclass(kw_only=True, slots=True, frozen=True)
+class Error:
+    training_id: int
+    params: str
+    msg: str
 
-    def sorted_trainings(self) -> list[T]:
-        """Get a new list with sorted trainings, with the best at the top."""
 
-        return sorted(
-            self,
-            key=operator.attrgetter("metric_value"),
-            reverse=self.metric.greater_is_better,
-        )
+E = TypeVar("E", bound=Error)
 
-    def top_trainings(self, n: int = 5) -> list[T]:
-        """Get ``n`` best trainings."""
-        return self.sorted_trainings()[:n]
+
+class TuningResults(SequenceProxy[T], Generic[P, T, E]):
+    _metric: Metric
+    _errors: tuple[E, ...]
 
     def to_df(self) -> pd.DataFrame:
         """Get dataframe describing all trainings in the tuning.
@@ -89,18 +75,30 @@ class TuningResults(SequenceProxy[T], Generic[P, T]):
         Columns correspond to fields from training objects.
         """
 
-        return pd.json_normalize(
-            [t._to_json() for t in self.sorted_trainings()]  # type: ignore
-        )
+        return pd.json_normalize([t._to_json() for t in self])  # type: ignore
 
     @property
     def metric(self) -> Metric:
         """Metric used in the tuning."""
         return self._metric
 
+    @property
+    def metric_value(self) -> float:
+        return self[0].metric_value  # type: ignore
+
+    @property
+    def errors(self) -> Sequence[E]:
+        """Errors got during tuning."""
+        return self._errors
+
     def __repr__(self) -> str:
+        metric_value: str | float
+        try:
+            metric_value = self.metric_value
+        except IndexError:
+            metric_value = "???"
+
         return (
             f"<TuningResults with {len(self)} trainings; "
-            f"best_training.metric_value="
-            f"{self.best_training.metric_value}>"  # type: ignore
+            f"metric_value={metric_value}>"
         )

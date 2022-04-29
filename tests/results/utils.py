@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from datetime import timedelta
-from typing import Any, Mapping
+from typing import Any
 
 import letstune
 
@@ -45,11 +44,3 @@ class EpochCheckpoint:
 class EpochCheckpointFactory:
     def get_checkpoint(self, training_id: int, epoch_id: int) -> Any:
         return EpochCheckpoint(training_id, epoch_id)
-
-
-@dataclass
-class RoundAssigner:
-    rounds: Mapping[timedelta, int]
-
-    def assign_to_round(self, cum_duration: timedelta) -> int:
-        return self.rounds[cum_duration]

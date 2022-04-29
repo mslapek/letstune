@@ -29,27 +29,29 @@ To unpickle the best model::
     model = chk.load_pickle()
 
 """
-
+import json
 import math
+import operator
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Generic, Mapping, Protocol, TypeVar
+from typing import Any, Generic, Protocol, Sequence, TypeVar
 
 from letstune import Metric, Params
+from letstune.backend import repo
+from letstune.backend.scheduler.epoch import Config
 
 from . import _base
-
-P = TypeVar("P", bound=Params)
 
 __all__ = [
     "CheckpointFactory",
     "Epoch",
     "Training",
     "TuningResults",
-    "RoundAssigner",
-    "TrainingBuilder",
-    "Builder",
+    "Error",
+    "build",
 ]
+
+P = TypeVar("P", bound=Params)
 
 
 class CheckpointFactory(Protocol):
@@ -71,7 +73,6 @@ class Epoch(_base.TrainingStats):
     epoch_id: int
     cum_metric_value: float
     cum_duration: timedelta
-    round: int
     _checkpoint_factory: CheckpointFactory
 
     @property
@@ -96,6 +97,7 @@ class Training(_base.SequenceProxy[Epoch], Generic[P]):
 
     training_id: int
     params: P
+    round: int
     _sequence: tuple[Epoch, ...]
     _metric: Metric
 
@@ -117,17 +119,16 @@ class Training(_base.SequenceProxy[Epoch], Generic[P]):
     @property
     def best_epoch(self) -> Epoch:
         """The best epoch in the training."""
-        return self._best()
+        cmp = max if self._metric.greater_is_better else min
+        return cmp(
+            self,
+            key=operator.attrgetter("metric_value"),
+        )
 
     @property
     def last_epoch(self) -> Epoch:
         """Last epoch in the training."""
         return self[-1]
-
-    @property
-    def round(self) -> int:
-        """Round survived by this training."""
-        return self[-1].round
 
     @property
     def metric_value(self) -> float:
@@ -159,148 +160,135 @@ class Training(_base.SequenceProxy[Epoch], Generic[P]):
         )
 
 
-class TuningResults(_base.TuningResults[P, Training[P]]):
+@dataclass(kw_only=True, slots=True, frozen=True)
+class Error(_base.Error):
+    pass
+
+
+class TuningResults(_base.TuningResults[P, Training[P], Error]):
     """Results of epoch training.
 
     List of :class:`Training` objects, each representing one :class:`Params`.
     """
 
-    pass
 
+def _build_training(
+    metric: Metric,
+    checkpoint_factory: CheckpointFactory,
+    params_cls: type[P],
+    training: repo.Training,
+) -> Training[P]:
+    epochs = []
+    cum_metric_value = -math.inf if metric.greater_is_better else math.inf
+    cum_duration = timedelta()
 
-class RoundAssigner(Protocol):
-    """Object assigning each epoch to a round, based on cumulative duration."""
-
-    def assign_to_round(self, cum_duration: timedelta) -> int:
-        ...
-
-
-@dataclass(init=False, repr=False, eq=False, slots=True)
-class TrainingBuilder(Generic[P]):
-    """Builder of :class:`Training`. Only for *custom backend* developers.
-
-    The builder is called repeatedly with ``add_epoch``.
-    Finally, call ``build`` to add :class:`Training` to :class:`TuningResults`.
-    """
-
-    _builder: "Builder[P]"
-    _params: P
-    _training_id: int
-    _epochs: list[Epoch]
-    _cum_duration: timedelta
-    _cum_metric_value: float
-
-    def add_epoch(
-        self,
-        *,
-        start_time: datetime,
-        end_time: datetime,
-        metric_values: Mapping[str, float],
-    ) -> None:
-        metric = self._builder._metric
-        metric_value = metric_values[metric.name]
+    for e in training.epochs:
+        metric_value = e.metric_values[metric.name]
 
         if metric.greater_is_better:
-            self._cum_metric_value = max(self._cum_metric_value, metric_value)
+            cum_metric_value = max(cum_metric_value, metric_value)
         else:
-            self._cum_metric_value = min(self._cum_metric_value, metric_value)
+            cum_metric_value = min(cum_metric_value, metric_value)
 
-        self._cum_duration += end_time - start_time
+        cum_duration += e.duration
 
         ep = Epoch()
-        object.__setattr__(ep, "training_id", self._training_id)
-        object.__setattr__(ep, "epoch_id", len(self._epochs))
-        object.__setattr__(ep, "start_time", start_time)
-        object.__setattr__(ep, "end_time", end_time)
+        object.__setattr__(ep, "training_id", training.training_id)
+        object.__setattr__(ep, "epoch_id", e.epoch_id)
+        object.__setattr__(ep, "start_time", e.start_time)
+        object.__setattr__(ep, "end_time", e.end_time)
         object.__setattr__(
-            ep, "metric_values", _base.freeze_metric_values(metric_values)
+            ep, "metric_values", _base.freeze_metric_values(e.metric_values)
         )
         object.__setattr__(ep, "metric_value", metric_value)
-        object.__setattr__(ep, "cum_metric_value", self._cum_metric_value)
-        object.__setattr__(ep, "cum_duration", self._cum_duration)
-        object.__setattr__(
-            ep,
-            "round",
-            self._builder._round_assigner.assign_to_round(self._cum_duration),
-        )
-        object.__setattr__(ep, "_checkpoint_factory", self._builder._checkpoint_factory)
+        object.__setattr__(ep, "cum_metric_value", cum_metric_value)
+        object.__setattr__(ep, "cum_duration", cum_duration)
+        object.__setattr__(ep, "_checkpoint_factory", checkpoint_factory)
 
-        self._epochs.append(ep)
+        epochs.append(ep)
 
-    def build(self) -> None:
-        if self._training_id == -1:
-            raise RuntimeError
+    if len(epochs) == 0:
+        raise ValueError("training must have at least one epoch")
 
-        if self._training_id != len(self._builder._trainings):
-            raise RuntimeError
+    t: Training[P] = Training()
+    object.__setattr__(t, "training_id", training.training_id)
+    object.__setattr__(t, "params", params_cls.from_json(json.loads(training.params)))
+    object.__setattr__(t, "_sequence", tuple(epochs))
+    object.__setattr__(t, "_metric", metric)
 
-        if len(self._epochs) == 0:
-            raise ValueError("training must have at least one epoch")
-
-        t: Training[P] = Training()
-        object.__setattr__(t, "training_id", self._training_id)
-        object.__setattr__(t, "params", self._params)
-        object.__setattr__(t, "_sequence", tuple(self._epochs))
-        object.__setattr__(t, "_metric", self._builder._metric)
-
-        self._builder._trainings.append(t)
-
-        self._training_id = -1
+    return t
 
 
-class Builder(Generic[P]):
-    """Builder of :class:`TuningResults`. Only for *custom backend* developers.
+def _get_rounds(config: Config, trainings_count: int) -> list[int]:
+    rounds = [0] * trainings_count
+    n = len(rounds)
 
-    For each training,
-    the builder is called with ``add_training``, which returns :class:`TrainingBuilder`.
+    for round in range(1, len(config.round_durations)):
+        n = config.reduced_trainings_number(n)
 
-    After ``build`` was called on the training builder,
-    next :class:`TrainingBuilder` can be created with
-    ``add_training``.
+        for i in range(n):
+            rounds[i] = round
 
-    Finally, call ``build`` to get :class:`TuningResults`.
-    """
+    return rounds
 
-    def __init__(
-        self,
-        *,
-        metric: Metric,
-        checkpoint_factory: CheckpointFactory,
-        round_assigner: RoundAssigner,
-    ):
-        self._metric = metric
-        self._checkpoint_factory = checkpoint_factory
-        self._round_assigner = round_assigner
 
-        self._trainings: list[Training[P]] = []
+def build(
+    *,
+    metric: Metric,
+    checkpoint_factory: CheckpointFactory,
+    params_cls: type[P],
+    trainings: Sequence[repo.Training],
+    config: Config,
+) -> TuningResults[P]:
+    """Build :class:`TuningResults`. Only for *custom backend* developers."""
 
-    def add_training(
-        self,
-        params: P,
-    ) -> TrainingBuilder[P]:
-        b: TrainingBuilder[P] = TrainingBuilder()
+    if len(trainings) == 0:
+        raise ValueError("tuning must have at least one training")
 
-        b._builder = self
-        b._params = params
-        b._training_id = len(self._trainings)
+    valid_ts: list[Training[P]] = []
+    errors: list[Error] = []
+    for t in trainings:
+        if t.error is None and len(t.epochs) > 0:
+            valid_ts.append(
+                _build_training(
+                    metric,
+                    checkpoint_factory,
+                    params_cls,
+                    t,
+                )
+            )
+        else:
+            error = t.error
 
-        b._epochs = []
+            if error is None:
+                if len(t.epochs) == 0:
+                    error = "no epochs"
+                else:
+                    error = "unknown"
 
-        b._cum_duration = timedelta()
-        b._cum_metric_value = -math.inf if self._metric.greater_is_better else math.inf
+            errors.append(
+                Error(
+                    training_id=t.training_id,
+                    params=t.params,
+                    msg=error,
+                )
+            )
 
-        return b
+    valid_ts.sort(
+        key=operator.attrgetter("metric_value"),
+        reverse=metric.greater_is_better,
+    )
 
-    def build(self) -> TuningResults[P]:
-        """Get new :class:`TuningResults`."""
+    rounds = _get_rounds(config, len(trainings))
+    for i, round in enumerate(rounds):
+        if i >= len(valid_ts):
+            break
 
-        if len(self._trainings) == 0:
-            raise ValueError("tuning must have at least one training")
+        object.__setattr__(valid_ts[i], "round", round)
 
-        r: TuningResults[P] = TuningResults()
-        r._sequence = tuple(self._trainings)
-        r._metric = self._metric
+    r: TuningResults[P] = TuningResults()
+    r._sequence = tuple(valid_ts)
+    r._metric = metric
+    r._errors = tuple(errors)
 
-        self._trainings.clear()
-
-        return r
+    return r
