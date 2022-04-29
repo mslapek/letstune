@@ -41,7 +41,7 @@ class Repository(ABC):
         ...
 
     @abstractmethod
-    def add_epoch(self, training_id: int, epoch_stats: EpochStats) -> int:
+    def add_epoch(self, training_id: int, epoch_stats: EpochStats) -> None:
         """Add a new epoch.
 
         Raises :class:`ValueError`, when tuple
@@ -49,13 +49,18 @@ class Repository(ABC):
         occupied."""
         ...
 
-    @abstractmethod
     def get_training(self, training_id: int) -> Training:
-        ...
+        trainings = [
+            t for t in self.get_all_trainings() if t.training_id == training_id
+        ]
+
+        if len(trainings) == 0:
+            raise ValueError("no training with given id")
+        return trainings[0]
 
     @abstractmethod
     def set_error(self, training_id: int, description: str) -> None:
         ...
 
-    def __close__(self) -> None:
+    def close(self) -> None:
         pass
