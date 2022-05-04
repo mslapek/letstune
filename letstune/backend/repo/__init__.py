@@ -23,7 +23,7 @@ class EpochStats:
 class Training:
     training_id: int
     params: JSON
-    epochs: Sequence[EpochStats]
+    epochs: Sequence[EpochStats] = tuple()
     error: str | None = None
 
 
