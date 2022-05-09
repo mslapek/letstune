@@ -18,6 +18,7 @@ class ErrorOccured:
 
 
 class Runner(Generic[P, Trainer, Task]):
+    passthrough_errors: bool = False
     _repository: repo.Repository
     _params_cls: type[P]
 
@@ -46,6 +47,8 @@ class Runner(Generic[P, Trainer, Task]):
         try:
             result = f(*args)
         except Exception as e:
+            if self.passthrough_errors:
+                raise
             error_msg = repr(e)
 
         if error_msg is not None:

@@ -269,6 +269,48 @@ def test_failed_tasks(
     ]
 
 
+def test_failed_tasks_with_error_passthrough(
+    runner: SimpleRunner,
+    repository: Repository,
+    dataset: object,
+) -> None:
+    runner.test_tasks = [
+        Task(training_id=13),
+        Task(training_id=660),
+    ]
+    runner.passthrough_errors = True
+
+    with pytest.raises(RuntimeError, match="today is a good day"):
+        runner.run()
+
+    new_trainer = runner._trainer
+    assert isinstance(new_trainer, Trainer)
+
+    assert new_trainer.log == [
+        ("load_dataset", dataset),
+        ("train", ModelParams(alpha=13, beta=0.2)),
+        (
+            "save",
+            SimpleCheckpoint(training_id=13),
+            Model(params=ModelParams(alpha=13, beta=0.2)),
+        ),
+        ("train", ModelParams(alpha=660, beta=0.5)),
+    ]
+
+    assert repository.log == [
+        (
+            "add_epoch",
+            13,
+            EpochStats(
+                epoch_id=0,
+                metric_values={"accuracy": 13.0, "f_score": -13.0},
+                start_time=datetime(2022, 10, 1, 12, 0),
+                end_time=datetime(2022, 10, 1, 12, 30),
+            ),
+        ),
+    ]
+
+
 def test_original_trainer_is_not_touched(
     runner: SimpleRunner, trainer: Trainer
 ) -> None:

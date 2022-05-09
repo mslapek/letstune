@@ -466,6 +466,61 @@ def test_failed_tasks(
     ]
 
 
+def test_failed_tasks_with_error_passthrough(
+    runner: EpochRunner,
+    repository: IterableRepository,
+    dataset: object,
+) -> None:
+    runner.tasks_iter = iter(
+        [
+            [
+                Task(training_id=13, next_epoch=1, duration=timedelta(minutes=2)),
+                Task(training_id=660, next_epoch=1, duration=timedelta(minutes=2)),
+                Task(training_id=16, next_epoch=1, duration=timedelta(minutes=2)),
+            ],
+            [],
+        ]
+    )
+    runner.time_iter = (datetime(2022, 10, 10, i + 1, 0, 0) for i in range(4))
+    runner.passthrough_errors = True
+
+    with pytest.raises(RuntimeError, match="today is a good day"):
+        runner.run()
+
+    new_trainer = runner._trainer
+    assert isinstance(new_trainer, Trainer)
+
+    assert new_trainer.log == [
+        ("load_dataset", dataset),
+        (
+            "load",
+            EpochCheckpoint(training_id=13, epoch_id=0),
+            ModelParams(alpha=13, beta=0.2),
+        ),
+        ("train_epoch", 1),
+        ("save", EpochCheckpoint(training_id=13, epoch_id=1)),
+        (
+            "load",
+            EpochCheckpoint(training_id=660, epoch_id=0),
+            ModelParams(alpha=660, beta=0.5),
+        ),
+        ("train_epoch", 1),
+    ]
+
+    assert repository.log == [
+        (
+            "add_epoch",
+            13,
+            EpochStats(
+                epoch_id=1,
+                metric_values={"accuracy": 13.0, "f_score": 1.0},
+                start_time=datetime(2022, 10, 10, 1, 0),
+                end_time=datetime(2022, 10, 10, 2, 0),
+            ),
+        ),
+    ]
+
+
 def test_original_trainer_is_not_touched(
     runner: EpochRunner,
     trainer: Trainer,
