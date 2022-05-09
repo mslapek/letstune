@@ -48,6 +48,8 @@ def _normalize_training(
             metric_value = -math.inf
         else:
             metric_value = math.inf
+    elif len(t.epochs) == 0:
+        metric_value = 0.0
     else:
         metric_values = (e.metric_values[metric.name] for e in t.epochs)
         if metric.greater_is_better:

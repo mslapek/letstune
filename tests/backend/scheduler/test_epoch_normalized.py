@@ -29,6 +29,99 @@ def test_no_trainings() -> None:
     assert len(tasks) == 0
 
 
+def test_all_new() -> None:
+    tasks = _get_next_tasks(
+        Config(
+            round_durations=[
+                timedelta(minutes=1),
+                timedelta(minutes=2),
+            ]
+        ),
+        [
+            _Training(
+                training_id=5,
+                cum_duration=timedelta(),
+                next_epoch=0,
+                metric_value=METRIC_VALUE,
+            ),
+            _Training(
+                training_id=8,
+                cum_duration=timedelta(),
+                next_epoch=0,
+                metric_value=METRIC_VALUE,
+            ),
+        ],
+    )
+
+    assert tasks == [
+        Task(
+            training_id=5,
+            next_epoch=0,
+            duration=timedelta(minutes=1),
+        ),
+        Task(
+            training_id=8,
+            next_epoch=0,
+            duration=timedelta(minutes=1),
+        ),
+    ]
+
+
+def test_some_still_new() -> None:
+    tasks = _get_next_tasks(
+        Config(
+            round_durations=[
+                timedelta(minutes=1),
+                timedelta(minutes=2),
+            ]
+        ),
+        [
+            _Training(
+                training_id=100,
+                cum_duration=timedelta(seconds=130),
+                next_epoch=2,
+                metric_value=METRIC_VALUE,
+            ),
+            _Training(
+                training_id=5,
+                cum_duration=timedelta(),
+                next_epoch=0,
+                metric_value=METRIC_VALUE,
+            ),
+            _Training(
+                training_id=16,
+                cum_duration=timedelta(seconds=30),
+                next_epoch=2,
+                metric_value=METRIC_VALUE,
+            ),
+            _Training(
+                training_id=8,
+                cum_duration=timedelta(),
+                next_epoch=0,
+                metric_value=METRIC_VALUE,
+            ),
+        ],
+    )
+
+    assert tasks == [
+        Task(
+            training_id=5,
+            next_epoch=0,
+            duration=timedelta(minutes=1),
+        ),
+        Task(
+            training_id=16,
+            next_epoch=2,
+            duration=timedelta(seconds=30),
+        ),
+        Task(
+            training_id=8,
+            next_epoch=0,
+            duration=timedelta(minutes=1),
+        ),
+    ]
+
+
 def test_all_in_round_0() -> None:
     tasks = _get_next_tasks(
         Config(

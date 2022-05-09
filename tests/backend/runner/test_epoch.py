@@ -321,14 +321,14 @@ def test_successful_tasks(
         ("save", EpochCheckpoint(training_id=13, epoch_id=1)),
         (
             "load",
-            EpochCheckpoint(training_id=20, epoch_id=3),
+            EpochCheckpoint(training_id=20, epoch_id=2),
             ModelParams(alpha=20, beta=0.5),
         ),
         ("train_epoch", 3),
         ("save", EpochCheckpoint(training_id=20, epoch_id=3)),
         (
             "load",
-            EpochCheckpoint(training_id=13, epoch_id=100),
+            EpochCheckpoint(training_id=13, epoch_id=99),
             ModelParams(alpha=13, beta=0.2),
         ),
         ("train_epoch", 100),
@@ -430,21 +430,21 @@ def test_failed_tasks(
         ("load_dataset", dataset),
         (
             "load",
-            EpochCheckpoint(training_id=13, epoch_id=1),
+            EpochCheckpoint(training_id=13, epoch_id=0),
             ModelParams(alpha=13, beta=0.2),
         ),
         ("train_epoch", 1),
         ("save", EpochCheckpoint(training_id=13, epoch_id=1)),
         (
             "load",
-            EpochCheckpoint(training_id=660, epoch_id=1),
+            EpochCheckpoint(training_id=660, epoch_id=0),
             ModelParams(alpha=660, beta=0.5),
         ),
         ("train_epoch", 1),
         ("create_model", ModelParams(alpha=770, beta=0.5)),
         (
             "load",
-            EpochCheckpoint(training_id=880, epoch_id=1),
+            EpochCheckpoint(training_id=880, epoch_id=0),
             ModelParams(alpha=880, beta=0.5),
         ),
     ]

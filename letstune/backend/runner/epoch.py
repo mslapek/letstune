@@ -54,7 +54,9 @@ class EpochRunner(_base.Runner[P, EpochTrainer[P], Task], Generic[P]):
                 task.training_id, self._trainer.create_model, params
             )
         else:
-            chk = self._checkpoint_factory.get_checkpoint(task.training_id, next_epoch)
+            chk = self._checkpoint_factory.get_checkpoint(
+                task.training_id, next_epoch - 1
+            )
             result = self._catch_error(
                 task.training_id, self._trainer.load, chk, params
             )

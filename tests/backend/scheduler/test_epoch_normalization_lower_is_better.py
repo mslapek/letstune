@@ -45,6 +45,23 @@ def test_normalize_training() -> None:
     )
 
 
+def test_normalize_empty_training() -> None:
+    t = _normalize_training(
+        METRIC,
+        repo.Training(
+            training_id=602,
+            params="?????",
+        ),
+    )
+
+    assert t == _Training(
+        training_id=602,
+        cum_duration=timedelta(),
+        next_epoch=0,
+        metric_value=0.0,
+    )
+
+
 def test_normalize_error_training() -> None:
     t = _normalize_training(
         METRIC,
