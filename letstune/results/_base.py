@@ -65,6 +65,13 @@ class Error:
 E = TypeVar("E", bound=Error)
 
 
+def _format_quantity(n: int, what: str) -> str:
+    if n == 1:
+        return f"1 {what}"
+    else:
+        return f"{n} {what}s"
+
+
 class TuningResults(SequenceProxy[T], Generic[P, T, E]):
     _metric: Metric
     _errors: tuple[E, ...]
@@ -92,13 +99,18 @@ class TuningResults(SequenceProxy[T], Generic[P, T, E]):
         return self._errors
 
     def __repr__(self) -> str:
-        metric_value: str | float
-        try:
-            metric_value = self.metric_value
-        except IndexError:
-            metric_value = "???"
+        s = "<TuningResults with "
+        s += _format_quantity(len(self), "training")
 
-        return (
-            f"<TuningResults with {len(self)} trainings; "
-            f"metric_value={metric_value}>"
-        )
+        if len(self.errors) != 0:
+            s += " and " + _format_quantity(len(self.errors), "error")
+
+        s += "; metric_value="
+        try:
+            s += str(self.metric_value)
+        except IndexError:
+            s += "???"
+
+        s += ">"
+
+        return s

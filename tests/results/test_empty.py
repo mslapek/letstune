@@ -67,7 +67,10 @@ def test_simple_tuning_error_only_repr() -> None:
         ],
     )
 
-    assert repr(tuning) == "<TuningResults with 0 trainings; metric_value=???>"
+    assert (
+        repr(tuning)
+        == "<TuningResults with 0 trainings and 2 errors; metric_value=???>"
+    )
 
 
 def test_epoch_tuning_error_only_repr() -> None:
@@ -98,4 +101,7 @@ def test_epoch_tuning_error_only_repr() -> None:
         ],
     )
 
-    assert repr(tuning) == "<TuningResults with 0 trainings; metric_value=???>"
+    assert (
+        repr(tuning)
+        == "<TuningResults with 0 trainings and 2 errors; metric_value=???>"
+    )

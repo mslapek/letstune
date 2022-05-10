@@ -152,6 +152,13 @@ def test_metric_value(tuning_results: simple.TuningResults[ModelParams]) -> None
     assert tuning_results.metric_value == 0.4
 
 
+def test_repr(tuning_results: simple.TuningResults[ModelParams]) -> None:
+    assert (
+        repr(tuning_results)
+        == "<TuningResults with 3 trainings and 2 errors; metric_value=0.4>"
+    )
+
+
 def test_training(tuning_results: simple.TuningResults[ModelParams]) -> None:
     training = tuning_results[2]
 

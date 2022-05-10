@@ -181,7 +181,10 @@ def test_metric_value(tuning_results: epoch.TuningResults[ModelParams]) -> None:
 
 
 def test_repr(tuning_results: epoch.TuningResults[ModelParams]) -> None:
-    assert repr(tuning_results) == "<TuningResults with 2 trainings; metric_value=0.7>"
+    assert (
+        repr(tuning_results)
+        == "<TuningResults with 2 trainings and 2 errors; metric_value=0.7>"
+    )
 
 
 def test_get_item(tuning_results: epoch.TuningResults[ModelParams]) -> None:
