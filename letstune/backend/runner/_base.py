@@ -3,8 +3,10 @@ import pickle
 from datetime import datetime, timezone
 from typing import Any, Callable, Generic, Sequence, TypeVar
 
+import letstune
 from letstune import Params
 from letstune.backend import repo
+from letstune.backend.runner import log
 
 T = TypeVar("T")
 
@@ -19,8 +21,10 @@ class ErrorOccured:
 
 class Runner(Generic[P, Trainer, Task]):
     passthrough_errors: bool = False
+    logger: log.Logger = log.NULL_LOGGER
     _repository: repo.Repository
     _params_cls: type[P]
+    _metric: letstune.Metric
 
     def __init__(
         self,
@@ -29,6 +33,7 @@ class Runner(Generic[P, Trainer, Task]):
     ):
         self.__dataset = dataset
         self._trainer = clone_trainer(trainer)
+        self._metric = trainer.metric  # type: ignore
 
     def _load_dataset(self) -> None:
         self._trainer.load_dataset(self.__dataset)  # type: ignore
@@ -60,12 +65,24 @@ class Runner(Generic[P, Trainer, Task]):
         trainings = self._repository.get_all_trainings()
         params = {t.training_id: t.params for t in trainings}
         tasks = self._get_next_tasks(trainings)
+        tasks_present = len(tasks) != 0
+
+        log = dict(
+            event="round",
+            tasks_count=len(tasks),
+        )
+
+        if tasks_present:
+            self.logger.log(**log, sub_event="start")
 
         for t in tasks:
             p = self._parse_params(params[t.training_id])  # type: ignore
             self._run_task(t, p)
 
-        return len(tasks) != 0
+        if tasks_present:
+            self.logger.log(**log, sub_event="end")
+
+        return tasks_present
 
     def _get_next_tasks(self, trainings: Sequence[repo.Training]) -> list[Task]:
         raise NotImplementedError

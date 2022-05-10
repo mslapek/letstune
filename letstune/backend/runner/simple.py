@@ -42,11 +42,15 @@ class SimpleRunner(_base.Runner[P, SimpleTrainer[P], Task], Generic[P]):
         self._run_round()
 
     def _run_task(self, task: Task, params: P) -> None:
+        log = dict(event="train", training_id=task.training_id)
+        self.logger.log(**log, sub_event="start")
+
         start_time = self._time()
         result = self._catch_error(task.training_id, self._trainer.train, params)
         end_time = self._time()
 
         if isinstance(result, _base.ErrorOccured):
+            self.logger.log(**log, sub_event="stop", status="failed")
             return
 
         model, metric_values = result
@@ -61,6 +65,12 @@ class SimpleRunner(_base.Runner[P, SimpleTrainer[P], Task], Generic[P]):
                 start_time=start_time,
                 end_time=end_time,
             ),
+        )
+
+        self.logger.log(
+            **log,
+            sub_event="stop",
+            metric_value=metric_values.get(self._metric.name),
         )
 
     def _get_next_tasks(self, trainings: Sequence[repo.Training]) -> list[Task]:

@@ -12,6 +12,8 @@ from letstune.backend.repo import JSON, EpochStats, Training
 from letstune.backend.scheduler.epoch import Config, Task
 from letstune.metrics import MetricValues
 
+from .utils import HistoryLogger
+
 CONFIG = Config(round_durations=[timedelta(minutes=2), timedelta(minutes=5)])
 METRIC = letstune.Metric("accuracy")
 
@@ -172,11 +174,17 @@ def repository() -> IterableRepository:
 
 
 @pytest.fixture
+def logger() -> HistoryLogger:
+    return HistoryLogger()
+
+
+@pytest.fixture
 def runner(
     dataset: object,
     trainer: Trainer,
     checkpoint_factory: EpochCheckpointFactory,
     repository: IterableRepository,
+    logger: HistoryLogger,
 ) -> EpochRunner:
     runner = EpochRunner(
         repository=repository,
@@ -186,6 +194,7 @@ def runner(
         params_cls=ModelParams,
         config=CONFIG,
     )
+    runner.logger = logger
 
     runner.tasks_iter = iter(
         [
@@ -306,6 +315,7 @@ def test_successful_tasks(
     runner: EpochRunner,
     repository: IterableRepository,
     dataset: object,
+    logger: HistoryLogger,
 ) -> None:
     runner.run()
 
@@ -402,11 +412,133 @@ def test_successful_tasks(
         ),
     ]
 
+    assert logger.history == [
+        {"event": "round", "sub_event": "start", "tasks_count": 2},
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 13,
+            "planned_duration": timedelta(seconds=2400),
+        },
+        {
+            "event": "epoch",
+            "sub_event": "start",
+            "training_id": 13,
+            "epoch": 0,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 13,
+            "epoch": 0,
+            "metric_value": 13.0,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "start",
+            "training_id": 13,
+            "epoch": 1,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 13,
+            "epoch": 1,
+            "metric_value": 13.0,
+        },
+        {
+            "training_id": 13,
+            "event": "training",
+            "sub_event": "end",
+            "planned_duration": timedelta(seconds=2400),
+        },
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 20,
+            "planned_duration": timedelta(seconds=600),
+        },
+        {
+            "event": "epoch",
+            "sub_event": "start",
+            "training_id": 20,
+            "epoch": 3,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 20,
+            "epoch": 3,
+            "metric_value": 20.0,
+        },
+        {
+            "event": "training",
+            "sub_event": "end",
+            "training_id": 20,
+            "planned_duration": timedelta(seconds=600),
+        },
+        {"event": "round", "sub_event": "end", "tasks_count": 2},
+        {"event": "round", "sub_event": "start", "tasks_count": 1},
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 13,
+            "planned_duration": timedelta(seconds=1200),
+        },
+        {
+            "event": "epoch",
+            "sub_event": "start",
+            "training_id": 13,
+            "epoch": 100,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 13,
+            "epoch": 100,
+            "metric_value": 13.0,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "start",
+            "training_id": 13,
+            "epoch": 101,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 13,
+            "epoch": 101,
+            "metric_value": 13.0,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "start",
+            "epoch": 102,
+            "training_id": 13,
+        },
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 13,
+            "epoch": 102,
+            "metric_value": 13.0,
+        },
+        {
+            "event": "training",
+            "sub_event": "end",
+            "training_id": 13,
+            "planned_duration": timedelta(seconds=1200),
+        },
+        {"event": "round", "sub_event": "end", "tasks_count": 1},
+    ]
+
 
 def test_failed_tasks(
     runner: EpochRunner,
     repository: IterableRepository,
     dataset: object,
+    logger: HistoryLogger,
 ) -> None:
     runner.tasks_iter = iter(
         [
@@ -465,11 +597,72 @@ def test_failed_tasks(
         ("set_error", 880, "RuntimeError('hi')"),
     ]
 
+    assert logger.history == [
+        {"event": "round", "sub_event": "start", "tasks_count": 4},
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 13,
+            "planned_duration": timedelta(seconds=120),
+        },
+        {"event": "epoch", "sub_event": "start", "training_id": 13, "epoch": 1},
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 13,
+            "epoch": 1,
+            "metric_value": 13.0,
+        },
+        {
+            "event": "training",
+            "sub_event": "end",
+            "training_id": 13,
+            "planned_duration": timedelta(seconds=120),
+        },
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 660,
+            "planned_duration": timedelta(seconds=120),
+        },
+        {"event": "epoch", "sub_event": "start", "training_id": 660, "epoch": 1},
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 660,
+            "epoch": 1,
+            "status": "failure",
+        },
+        {
+            "event": "training",
+            "sub_event": "end",
+            "training_id": 660,
+            "planned_duration": timedelta(seconds=120),
+            "status": "failure",
+        },
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 770,
+            "planned_duration": timedelta(seconds=120),
+            "status": "failure",
+        },
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 880,
+            "planned_duration": timedelta(seconds=120),
+            "status": "failure",
+        },
+        {"event": "round", "sub_event": "end", "tasks_count": 4},
+    ]
+
 
 def test_failed_tasks_with_error_passthrough(
     runner: EpochRunner,
     repository: IterableRepository,
     dataset: object,
+    logger: HistoryLogger,
 ) -> None:
     runner.tasks_iter = iter(
         [
@@ -518,6 +711,37 @@ def test_failed_tasks_with_error_passthrough(
                 end_time=datetime(2022, 10, 10, 2, 0),
             ),
         ),
+    ]
+
+    assert logger.history == [
+        {"event": "round", "sub_event": "start", "tasks_count": 3},
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 13,
+            "planned_duration": timedelta(seconds=120),
+        },
+        {"event": "epoch", "sub_event": "start", "training_id": 13, "epoch": 1},
+        {
+            "event": "epoch",
+            "sub_event": "end",
+            "training_id": 13,
+            "epoch": 1,
+            "metric_value": 13.0,
+        },
+        {
+            "event": "training",
+            "sub_event": "end",
+            "training_id": 13,
+            "planned_duration": timedelta(seconds=120),
+        },
+        {
+            "event": "training",
+            "sub_event": "start",
+            "training_id": 660,
+            "planned_duration": timedelta(seconds=120),
+        },
+        {"event": "epoch", "sub_event": "start", "training_id": 660, "epoch": 1},
     ]
 
 

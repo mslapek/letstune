@@ -11,6 +11,8 @@ from letstune.backend.repo import JSON, EpochStats, Training
 from letstune.backend.scheduler.simple import Task
 from letstune.metrics import MetricValues
 
+from .utils import HistoryLogger
+
 
 class ModelParams(letstune.Params):
     alpha: int
@@ -138,11 +140,17 @@ def repository() -> Repository:
 
 
 @pytest.fixture
+def logger() -> HistoryLogger:
+    return HistoryLogger()
+
+
+@pytest.fixture
 def runner(
     dataset: object,
     trainer: Trainer,
     checkpoint_factory: SimpleCheckpointFactory,
     repository: Repository,
+    logger: HistoryLogger,
 ) -> SimpleRunner:
     runner = SimpleRunner(
         repository=repository,
@@ -151,6 +159,7 @@ def runner(
         dataset=dataset,
         params_cls=ModelParams,
     )
+    runner.logger = logger
     runner.time_iter = iter(
         [
             datetime(2022, 10, 1, 12, 0, 0),
@@ -173,6 +182,7 @@ def test_successful_tasks(
     runner: SimpleRunner,
     repository: Repository,
     dataset: object,
+    logger: HistoryLogger,
 ) -> None:
     runner.test_tasks = [
         Task(training_id=13),
@@ -223,11 +233,31 @@ def test_successful_tasks(
         ),
     ]
 
+    assert logger.history == [
+        {"event": "round", "sub_event": "start", "tasks_count": 2},
+        {"event": "train", "sub_event": "start", "training_id": 13},
+        {
+            "event": "train",
+            "sub_event": "stop",
+            "training_id": 13,
+            "metric_value": 13.0,
+        },
+        {"event": "train", "sub_event": "start", "training_id": 20},
+        {
+            "event": "train",
+            "sub_event": "stop",
+            "training_id": 20,
+            "metric_value": 20.0,
+        },
+        {"event": "round", "sub_event": "end", "tasks_count": 2},
+    ]
+
 
 def test_failed_tasks(
     runner: SimpleRunner,
     repository: Repository,
     dataset: object,
+    logger: HistoryLogger,
 ) -> None:
     runner.test_tasks = [
         Task(training_id=13),
@@ -268,11 +298,31 @@ def test_failed_tasks(
         ),
     ]
 
+    assert logger.history == [
+        {"event": "round", "sub_event": "start", "tasks_count": 2},
+        {"event": "train", "sub_event": "start", "training_id": 13},
+        {
+            "event": "train",
+            "sub_event": "stop",
+            "training_id": 13,
+            "metric_value": 13.0,
+        },
+        {"event": "train", "sub_event": "start", "training_id": 660},
+        {
+            "event": "train",
+            "sub_event": "stop",
+            "training_id": 660,
+            "status": "failed",
+        },
+        {"event": "round", "sub_event": "end", "tasks_count": 2},
+    ]
+
 
 def test_failed_tasks_with_error_passthrough(
     runner: SimpleRunner,
     repository: Repository,
     dataset: object,
+    logger: HistoryLogger,
 ) -> None:
     runner.test_tasks = [
         Task(training_id=13),
@@ -308,6 +358,18 @@ def test_failed_tasks_with_error_passthrough(
                 end_time=datetime(2022, 10, 1, 12, 30),
             ),
         ),
+    ]
+
+    assert logger.history == [
+        {"event": "round", "sub_event": "start", "tasks_count": 2},
+        {"event": "train", "sub_event": "start", "training_id": 13},
+        {
+            "event": "train",
+            "sub_event": "stop",
+            "training_id": 13,
+            "metric_value": 13.0,
+        },
+        {"event": "train", "sub_event": "start", "training_id": 660},
     ]
 
 
