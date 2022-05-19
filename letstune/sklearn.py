@@ -2,10 +2,10 @@
 
 :class:`SklearnTrainer` trains model on a train dataset,
 then evaluates metrics on a validation dataset.
-Good companion for ``sklearn.model_selection.train_test_split``.
+Good companion for :func:`sklearn.model_selection.train_test_split`.
 
 :class:`SklearnCVTrainer` evaluates model with k-fold cross-validation.
-It's a great substitution for ``sklearn.model_selection.GridSearchCV``!
+It's a great substitution for :class:`sklearn.model_selection.GridSearchCV`!
 """
 
 from abc import ABC
@@ -39,21 +39,20 @@ class _SklearnTrainerBase(letstune.SimpleTrainer[P], ABC):
     ):
         """Create :class:`SklearnTrainer`.
 
-        First parameter is the type of the used :class:`Params`.
+        First parameter is the type of the used :class:`letstune.Params`.
         It is *the only required* parameter.
 
         Instead of the type, you can pass any object with ``get_random_params``
         method.
 
-        Additional keyword arguments
-        ----------------------------
+        **Additional keyword arguments**
 
         Dictionary ``create_model_kwargs`` has additional arguments, which will be
         used for ``params.create_model``::
 
             model = params.create_model(**create_model_kwargs)
 
-        Notice, that :class:`ModelParams` has support for additional
+        Notice, that :class:`letstune.ModelParams` has support for additional
         parameters in ``create_model``.
 
         Dictionary ``fit_model_kwargs`` has additional arguments, which will be
@@ -61,8 +60,7 @@ class _SklearnTrainerBase(letstune.SimpleTrainer[P], ABC):
 
             model.fit(X, y, **fit_model_kwargs)
 
-        Scorer
-        ------
+        **Scorer**
 
         By default ``model.score(X, y)`` is used for scoring.
 
@@ -70,7 +68,7 @@ class _SklearnTrainerBase(letstune.SimpleTrainer[P], ABC):
         and returns a ``float``.
 
         ``scorer`` can be set to a string, then a scorer from
-        ``sklearn.metrics.get_scorer`` will be used.
+        :func:`sklearn.metrics.get_scorer` will be used.
 
         """
         self.__random_params_generator = params_cls
@@ -104,10 +102,9 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
     """Trainer for sklearn-like models *without* early-stopping.
 
     :class:`SklearnTrainer` allows you to tune sklearn-like models
-    without creating own :class:`SimpleTrainer` class.
+    without creating own :class:`letstune.SimpleTrainer` class.
 
-    Model
-    -----
+    **Model**
 
     Model is created with ``params.create_model()``.
     The trainer is compatible with :class:`letstune.ModelParams`.
@@ -124,8 +121,7 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
                     penalty="elasticnet",
                 )
 
-    Dataset
-    -------
+    **Dataset**
 
     A :class:`SklearnTrainer` consumes a ``dataset``
     with train/validation split::
@@ -133,19 +129,18 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
         dataset = (X_train, X_valid, y_train, y_valid)
 
     This is compatible with output from
-    ``sklearn.model_selection.train_test_split``.
+    :func:`sklearn.model_selection.train_test_split`.
 
     Model is trained with ``model.fit(X_train, y_train)``.
 
-    ------
+    §
 
     When ``trainer.optimize_train_score`` is ``True``, then validation
     data can be omitted::
 
         dataset = (X_train, y_train)
 
-    Metrics
-    -------
+    **Metrics**
 
     By default, ``valid_score`` is optimized:
 
@@ -167,7 +162,7 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
 
     Metric ``train_score`` is calculated using ``(X_train, y_train)``.
 
-    ------
+    §
 
     When ``trainer.optimize_train_score`` is ``True``,
     then ``train_score`` is optimized:
@@ -224,7 +219,7 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
 class Splitter(Protocol):
     """Object performing CV splits.
 
-    An example of such object is ``sklearn.model_selection.KFold``.
+    An example of such object is :class:`sklearn.model_selection.KFold`.
     """
 
     def split(X: Any, y: Any = None, groups: Any = None) -> Iterable[tuple[Any, Any]]:
@@ -246,16 +241,14 @@ class SklearnCVTrainer(_SklearnTrainerBase[P]):
     """Cross-validating trainer for sklearn-like models *without* early-stopping.
 
     :class:`SklearnCVTrainer` allows you to tune sklearn-like models
-    without creating own :class:`SimpleTrainer` class.
+    without creating own :class:`letstune.SimpleTrainer` class.
 
-    Model
-    -----
+    **Model**
 
     Model is created with ``params.create_model()``.
     See :class:`SklearnTrainer` for more details.
 
-    Dataset
-    -------
+    **Dataset**
 
     Trainer accepts simple dataset::
 
@@ -263,8 +256,7 @@ class SklearnCVTrainer(_SklearnTrainerBase[P]):
 
     Model is trained for each fold with ``model.fit(X_fold, y_fold)``.
 
-    Metrics
-    -------
+    **Metrics**
 
     Trainer calculates score for validation data, including:
 
@@ -292,14 +284,13 @@ class SklearnCVTrainer(_SklearnTrainerBase[P]):
     ):
         """Create :class:`SklearnCVTrainer`.
 
-        First parameter is the type of the used :class:`Params`.
+        First parameter is the type of the used :class:`letstune.Params`.
         It is *the only required* parameter.
 
         Instead of the type, you can pass any object with ``get_random_params``
         method.
 
-        Cross-validation
-        ----------------
+        **Cross-validation**
 
         By default, the trainer performs 5-fold cross-validation
         *without* dataset shuffling.
@@ -310,11 +301,10 @@ class SklearnCVTrainer(_SklearnTrainerBase[P]):
 
         ``cv`` can be set to a splitter - an object with method
         ``split(X, y)`` returning iterable of ``(train_indices, valid_indices)``.
-        An example of such object is ``sklearn.model_selection.KFold``.
+        An example of such object is :class:`sklearn.model_selection.KFold`.
 
 
-        Additional keyword arguments
-        ----------------------------
+        **Additional keyword arguments**
 
         This class accepts the same keyword arguments as :class:`SklearnTrainer`.
         """
@@ -373,7 +363,11 @@ class SklearnCVTrainer(_SklearnTrainerBase[P]):
             )
 
     def final_train(self, best_params: P) -> Any:
-        """Train model on the whole dataset."""
+        """
+        Train model on the whole dataset.
+
+        Returns fitted model.
+        """
         model = self._create_model(best_params)
         self._fit_model(model, self.X, self.y)
         return model

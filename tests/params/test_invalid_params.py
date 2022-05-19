@@ -28,7 +28,7 @@ def test_no_default_random_generator() -> None:
     rng = np.random.default_rng(42)
 
     with pytest.raises(
-        letstune.params.NoDefaultRandomGenerator,
+        letstune.params.NoDefaultRandomGeneratorError,
         match="WithoutDefaultRandomGeneratorParams.+zeta",
     ):
         _ = WithoutDefaultRandomGeneratorParams.get_random_params(rng)

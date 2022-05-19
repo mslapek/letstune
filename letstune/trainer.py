@@ -1,8 +1,5 @@
 """Base classes used to describe your experiment.
 
-Overview
---------
-
 *Trainer* is a class, which knows how to *train* a model!
 
 :class:`SimpleTrainer` is good for sklearn-like models.
@@ -24,7 +21,7 @@ for instance::
         "valid_f1_score": 0.66,
     }
 
-Each trainer has a field ``metric`` of the type :class:`Metric`.
+Each trainer has a field ``metric`` of the type :class:`letstune.Metric`.
 
 ``metric.name`` declares, which metric value should be optimized by letstune.
 Other metric values are stored only for an analysis after a tuning.
@@ -101,7 +98,8 @@ class _BaseTrainer(ABC, Generic[P]):
     def get_random_params(self, rng: np.random.Generator) -> P:
         """Get random instance of the params.
 
-        For a class inheriting from ``SimpleTrainer[P]`` or ``EpochTrainer[P]``,
+        For a class inheriting from :class:`letstune.SimpleTrainer` [``P``]
+        or :class:`letstune.EpochTrainer` [``P``],
         it returns a random instance of ``P``.
         """
         p = _get_params(type(self))
@@ -129,13 +127,12 @@ class _BaseTrainer(ABC, Generic[P]):
 class SimpleTrainer(_BaseTrainer[P]):
     """Base class for experiments *without* early-stopping.
 
-    Lifecycle
-    ---------
+    **Lifecycle**
 
-    First, ``load_dataset`` is called with a dataset.
+    First, :meth:`load_dataset` is called with a dataset.
     It is expected to initialize fields related to the dataset.
 
-    Then ``train`` is repeatedly called with various params.
+    Then :meth:`train` is repeatedly called with various params.
     """
 
     @abstractmethod
@@ -168,21 +165,20 @@ class EpochTrainer(_BaseTrainer[P]):
     An epoch trainer contains a currently trained model as a field;
     usually in ``self.model``.
 
-    Lifecycle
-    ---------
+    **Lifecycle**
 
     Training is epoch oriented.
 
-    First, ``load_dataset`` is called with a dataset.
+    First, :meth:`load_dataset` is called with a dataset.
     It is expected to initialize fields related to the dataset.
 
     Then, model training for given params is performed:
 
-    * First, ``create_model`` or ``load`` is called (but *NOT* both!).
-    * ``train_epoch`` is repeatedly called.
-    * Finally, ``save`` is called.
+    * First, :meth:`create_model` or :meth:`load` is called (but *NOT* both!).
+    * :meth:`train_epoch` is repeatedly called.
+    * Finally, :meth:`save` is called.
 
-    The cycle, excluding ``load_dataset``,
+    The cycle, excluding :meth:`load_dataset`,
     might be repeated for different params.
     """
 
@@ -224,8 +220,8 @@ class EpochTrainer(_BaseTrainer[P]):
         ``checkpoint`` is an object passed from backend.
         Usually it has method ``load_pickle()``.
 
-        Notice, that ``create_model`` might *NOT* be called
-        before ``load``.
+        Notice, that :meth:`create_model` might *NOT* be called
+        before :meth:`load`.
 
         The default implementation unpickles to ``self.model``.
         """

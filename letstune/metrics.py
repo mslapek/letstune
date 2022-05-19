@@ -29,8 +29,7 @@ class Metric:
     >>> Metric("train_accuracy", greater_is_better=True)
     Metric(name='train_accuracy', greater_is_better=True)
 
-    Automatic inference
-    -------------------
+    **Automatic inference**
 
     When ``greater_is_better`` is not given, letstune will
     try to infer it from the ``name``.
@@ -40,8 +39,7 @@ class Metric:
 
     The rules are described below.
 
-    Greater is better metrics
-    -------------------------
+    **Greater is better metrics**
 
     All *scores*:
 
@@ -62,8 +60,7 @@ class Metric:
     >>> Metric("acc")
     Metric(name='acc', greater_is_better=True)
 
-    Lower is better metrics
-    -----------------------
+    **Lower is better metrics**
 
     All *losses*:
 
@@ -86,16 +83,14 @@ class Metric:
     >>> Metric("mae")
     Metric(name='mae', greater_is_better=False)
 
-    Negative metrics
-    ----------------
+    **Negative metrics**
 
     Metrics with ``neg`` prefix have negated ``greater_is_better``:
 
     >>> Metric("neg_root_mean_square_error")
     Metric(name='neg_root_mean_square_error', greater_is_better=True)
 
-    Valid and train splits
-    ----------------------
+    **Valid and train splits**
 
     Prefixes ``valid_`` and ``train_`` are ignored:
 
@@ -105,8 +100,7 @@ class Metric:
     >>> Metric("train_acc")
     Metric(name='train_acc', greater_is_better=True)
 
-    Name normalization
-    ------------------
+    **Name normalization**
 
     ``lower_case_with_underscores`` and ``CapitalizedWords``
     are supported:
@@ -120,8 +114,7 @@ class Metric:
     >>> Metric("valid_MeanAbsoluteError")
     Metric(name='valid_MeanAbsoluteError', greater_is_better=False)
 
-    Bibliography
-    ------------
+    **Bibliography**
 
     Inspired by metric names from:
 

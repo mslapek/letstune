@@ -211,13 +211,13 @@ def test_epoch(tuning_results: epoch.TuningResults[ModelParams]) -> None:
     assert ep.start_time == datetime(2022, 10, 1, 10, 10, 0)
     assert ep.end_time == datetime(2022, 10, 1, 10, 11, 0)
     assert ep.duration == timedelta(minutes=1)
-    assert ep.cum_duration == timedelta(minutes=5)
+    assert ep.total_duration == timedelta(minutes=5)
 
     assert ep.metric_values == MappingProxyType(
         {"yoyo": 0.3, "mean_square_error": 20.0}
     )
     assert ep.metric_value == 20.0
-    assert ep.cum_metric_value == 10.0
+    assert ep.total_metric_value == 10.0
 
 
 def test_epoch_has_no_dict(tuning_results: epoch.TuningResults[ModelParams]) -> None:

@@ -20,10 +20,9 @@ class KerasTrainer(EpochTrainer[P]):
     """Trainer for Keras models *with* early-stopping.
 
     :class:`KerasTrainer` allows you to tune Keras models
-    without creating own :class:`EpochTrainer` class.
+    without creating own :class:`letstune.EpochTrainer` class.
 
-    Model
-    -----
+    **Model**
 
     Model is created with ``params.create_model()``.
     The trainer is compatible with :class:`letstune.ModelParams`.
@@ -31,8 +30,7 @@ class KerasTrainer(EpochTrainer[P]):
     You can manually define a method ``create_model`` in your params
     class.
 
-    Dataset
-    -------
+    **Dataset**
 
     A :class:`KerasTrainer` can be passed a ``dataset``
     in two ways.
@@ -87,7 +85,7 @@ class KerasTrainer(EpochTrainer[P]):
     ):
         """Create :class:`KerasTrainer`.
 
-        First parameter is the type of the used :class:`Params`.
+        First parameter is the type of the used :class:`letstune.Params`.
 
         Instead of a type, you can pass any object with ``get_random_params``
         method.
@@ -98,15 +96,14 @@ class KerasTrainer(EpochTrainer[P]):
 
             metric = letstune.Metric("val_accuracy")
 
-        Additional keyword arguments
-        ----------------------------
+        **Additional keyword arguments**
 
         Dictionary ``create_model_kwargs`` has additional arguments, which will be
         used for ``params.create_model``::
 
             model = params.create_model(**create_model_kwargs)
 
-        Notice, that :class:`ModelParams` has support for additional
+        Notice, that :class:`letstune.ModelParams` has support for additional
         parameters in ``create_model``.
 
         Dictionary ``fit_model_kwargs`` has additional arguments, which will be

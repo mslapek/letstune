@@ -273,7 +273,7 @@ def test_epoch(tuning_results: epoch.TuningResults[ModelParams]) -> None:
     assert ep.start_time == datetime(2022, 10, 1, 10, 10, 0)
     assert ep.end_time == datetime(2022, 10, 1, 10, 11, 0)
     assert ep.duration == timedelta(minutes=1)
-    assert ep.cum_duration == timedelta(minutes=5)
+    assert ep.total_duration == timedelta(minutes=5)
 
     assert ep.metric_values == MappingProxyType(
         {
@@ -282,7 +282,7 @@ def test_epoch(tuning_results: epoch.TuningResults[ModelParams]) -> None:
         }
     )
     assert ep.metric_value == 0.5
-    assert ep.cum_metric_value == 0.7
+    assert ep.total_metric_value == 0.7
 
 
 def test_duration(tuning_results: epoch.TuningResults[ModelParams]) -> None:

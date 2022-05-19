@@ -1,7 +1,7 @@
 """Results of tuning using an epoch trainer.
 
 :class:`TuningResults` has many :class:`Training` objects,
-each representing training for a one :class:`Params` object.
+each representing training for a one :class:`letstune.Params` object.
 
 Each :class:`Training` has many :class:`Epoch` objects,
 each representing training for a one epoch.
@@ -25,7 +25,7 @@ Model loading
 
 To unpickle the best model::
 
-    chk = tuning.best_training.best_epoch.checkpoint
+    chk = tuning[0].best_epoch.checkpoint
     model = chk.load_pickle()
 
 """
@@ -71,8 +71,8 @@ class Epoch(_base.TrainingStats):
 
     training_id: int
     epoch_id: int
-    cum_metric_value: float
-    cum_duration: timedelta
+    total_metric_value: float
+    total_duration: timedelta
     _checkpoint_factory: CheckpointFactory
 
     @property
@@ -90,7 +90,7 @@ class Epoch(_base.TrainingStats):
 
 @dataclass(init=False, eq=False, slots=True, frozen=True)
 class Training(_base.SequenceProxy[Epoch], Generic[P]):
-    """Training of a model for given :class:`Params`.
+    """Training of a model for given :class:`letstune.Params`.
 
     List of :class:`Epoch` objects, each representing one epoch.
     """
@@ -168,7 +168,7 @@ class Error(_base.Error):
 class TuningResults(_base.TuningResults[P, Training[P], Error]):
     """Results of epoch training.
 
-    List of :class:`Training` objects, each representing one :class:`Params`.
+    List of :class:`Training` objects, each representing one :class:`letstune.Params`.
     """
 
 
@@ -179,18 +179,18 @@ def _build_training(
     training: repo.Training,
 ) -> Training[P]:
     epochs = []
-    cum_metric_value = -math.inf if metric.greater_is_better else math.inf
-    cum_duration = timedelta()
+    total_metric_value = -math.inf if metric.greater_is_better else math.inf
+    total_duration = timedelta()
 
     for e in training.epochs:
         metric_value = e.metric_values[metric.name]
 
         if metric.greater_is_better:
-            cum_metric_value = max(cum_metric_value, metric_value)
+            total_metric_value = max(total_metric_value, metric_value)
         else:
-            cum_metric_value = min(cum_metric_value, metric_value)
+            total_metric_value = min(total_metric_value, metric_value)
 
-        cum_duration += e.duration
+        total_duration += e.duration
 
         ep = Epoch()
         object.__setattr__(ep, "training_id", training.training_id)
@@ -201,8 +201,8 @@ def _build_training(
             ep, "metric_values", _base.freeze_metric_values(e.metric_values)
         )
         object.__setattr__(ep, "metric_value", metric_value)
-        object.__setattr__(ep, "cum_metric_value", cum_metric_value)
-        object.__setattr__(ep, "cum_duration", cum_duration)
+        object.__setattr__(ep, "total_metric_value", total_metric_value)
+        object.__setattr__(ep, "total_duration", total_duration)
         object.__setattr__(ep, "_checkpoint_factory", checkpoint_factory)
 
         epochs.append(ep)

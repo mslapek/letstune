@@ -1,7 +1,7 @@
 """Results of tuning using a simple trainer.
 
 :class:`TuningResults` has many :class:`Training` objects,
-each representing training for a one :class:`Params` object.
+each representing training for a one :class:`letstune.Params` object.
 
 Reporting
 ---------
@@ -16,7 +16,7 @@ Model loading
 
 To unpickle the best model::
 
-    chk = tuning.best_training.checkpoint
+    chk = tuning[0].checkpoint
     model = chk.load_pickle()
 
 """
@@ -34,6 +34,7 @@ __all__ = [
     "CheckpointFactory",
     "Training",
     "Error",
+    "TuningResults",
     "build",
 ]
 
@@ -54,7 +55,7 @@ class CheckpointFactory(Protocol):
 
 @dataclass(init=False, eq=False, slots=True, frozen=True)
 class Training(_base.TrainingStats, Generic[P]):
-    """Training of a model for given :class:`Params`."""
+    """Training of a model for given :class:`letstune.Params`."""
 
     params: P
     training_id: int
@@ -87,7 +88,7 @@ class Error(_base.Error):
 class TuningResults(_base.TuningResults[P, Training[P], Error]):
     """Results of simple training.
 
-    List of :class:`Training` objects, each representing one :class:`Params`.
+    List of :class:`Training` objects, each representing one :class:`letstune.Params`.
     """
 
 

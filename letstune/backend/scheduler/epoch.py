@@ -33,7 +33,7 @@ class Config:
 @dataclass(slots=True, frozen=True)
 class _Training:
     training_id: int
-    cum_duration: timedelta
+    total_duration: timedelta
     next_epoch: int
     metric_value: float
     error: bool = False
@@ -59,7 +59,7 @@ def _normalize_training(
 
     return _Training(
         training_id=t.training_id,
-        cum_duration=sum(
+        total_duration=sum(
             (e.duration for e in t.epochs),
             timedelta(),
         ),
@@ -96,18 +96,18 @@ def _get_next_tasks(
     config: Config,
     ts: list[_Training],
 ) -> list[Task]:
-    cum_round_duration = timedelta()
+    total_round_duration = timedelta()
     for round_duration in config.round_durations:
-        cum_round_duration += round_duration
+        total_round_duration += round_duration
 
         tasks = []
         for t in ts:
-            if t.cum_duration < cum_round_duration and not t.error:
+            if t.total_duration < total_round_duration and not t.error:
                 tasks.append(
                     Task(
                         training_id=t.training_id,
                         next_epoch=t.next_epoch,
-                        duration=cum_round_duration - t.cum_duration,
+                        duration=total_round_duration - t.total_duration,
                     )
                 )
 

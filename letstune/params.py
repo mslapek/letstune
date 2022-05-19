@@ -2,7 +2,11 @@
 used to define hyper-parameters."""
 
 
-__all__ = ["Params", "ModelParams", "NoDefaultRandomGenerator"]
+__all__ = [
+    "Params",
+    "ModelParams",
+    "NoDefaultRandomGeneratorError",
+]
 
 import dataclasses
 import sys
@@ -18,7 +22,7 @@ SelfParams = TypeVar("SelfParams", bound="Params")
 T = TypeVar("T")
 
 
-class NoDefaultRandomGenerator(Exception):
+class NoDefaultRandomGeneratorError(Exception):
     """Raised when :class:`Params`
     cannot derive default implementation of
     ``get_random_params`` for the given class."""
@@ -85,7 +89,7 @@ def _random_generator_from_type(t: type[T]) -> RandomParamsGenerator[T]:
     if isinstance(t, UnionType):
         return rand.oneof([_random_generator_from_type(tt) for tt in t.__args__])
 
-    raise NoDefaultRandomGenerator(t.__qualname__)
+    raise NoDefaultRandomGeneratorError(t.__qualname__)
 
 
 def _pop_field(
@@ -99,7 +103,7 @@ def _pop_field(
     else:
         try:
             gen = _random_generator_from_type(field_type)
-        except NoDefaultRandomGenerator:
+        except NoDefaultRandomGeneratorError:
             gen = None
 
     if gen is not None:
@@ -234,8 +238,7 @@ class Params(metaclass=_ParamsMeta):
     >>> params
     DigitsTrainingParams(layer_number=2, learning_rate=0.1)
 
-    Random params generation
-    ------------------------
+    **Random params generation**
 
     You can assign random generators to fields
     and use them to get random ``DigitsTrainingParams``:
@@ -251,7 +254,7 @@ class Params(metaclass=_ParamsMeta):
     >>> DigitsTrainingParams.get_random_params(rng)  # doctest: +ELLIPSIS
     DigitsTrainingParams(layer_number=1, learning_rate=...)
 
-    ``Params`` can have defined parameter sampling in ``get_random_params`` method:
+    :class:`Params` can have defined parameter sampling in :meth:`get_random_params` method:
 
     >>> class DigitsTrainingParams(Params):
     ...     layer_number: int
@@ -267,10 +270,9 @@ class Params(metaclass=_ParamsMeta):
     >>> DigitsTrainingParams.get_random_params(rng)  # doctest: +ELLIPSIS
     DigitsTrainingParams(layer_number=1, learning_rate=...)
 
-    Nested params
-    -------------
+    **Nested params**
 
-    You can compose ``Params`` classes to express more
+    You can compose :class:`Params` classes to express more
     sophisticated experiments.
 
     >>> class NeuralNetworkParams(Params):
@@ -284,8 +286,7 @@ class Params(metaclass=_ParamsMeta):
     >>> DigitsTrainingParams.get_random_params(rng)  # doctest: +ELLIPSIS
     DigitsTrainingParams(neural_network=NeuralNetworkParams(layer_number=1, channels=256), learning_rate=...)
 
-    Union types
-    -----------
+    **Union types**
 
     You can have different parameters for various kinds of your model.
     This way *letstune* can help you decide, which model family
@@ -308,7 +309,7 @@ class Params(metaclass=_ParamsMeta):
     >>> ExperimentParams.get_random_params(rng)  # doctest: +ELLIPSIS
     ExperimentParams(model_params=RandomForestParams(min_samples_split=3, max_features='sqrt'), pca_components=64)
 
-    Notice, that ``get_random_params`` returns various classes of ``model_params``.
+    Notice, that :meth:`get_random_params` returns various classes of ``model_params``.
 
     """  # noqa
 
@@ -325,22 +326,20 @@ class Params(metaclass=_ParamsMeta):
     ) -> SelfParams:
         """Get random instance of the params.
 
-        Default random generator
-        ------------------------
+        **Default random generator**
 
         The default implementation chooses a random generator for each field:
 
         * If random generator is manually passed, it is used.
         * Otherwise, a random generator is deduced from the declared field type.
         * If there is no default random generator for the given type,
-          then :class:`NoDefaultRandomGenerator` is raised.
+          then :class:`letstune.params.NoDefaultRandomGeneratorError` is raised.
 
-        Random generator from a type
-        ----------------------------
+        **Random generator from a type**
 
         If a given type has ``get_random_params`` method, then it is used.
 
-        ``bool`` is assigned ``True`` or ``False``, each with 50% probability.
+        :class:`bool` is assigned ``True`` or ``False``, each with 50% probability.
 
         If a given type is a union, such as ``MyParams1 | MyParams2 | MyParams3``,
         then it
@@ -355,7 +354,7 @@ class Params(metaclass=_ParamsMeta):
             gen = field.metadata.get("gen")
 
             if gen is None:
-                raise NoDefaultRandomGenerator(cls.__qualname__, field.name)
+                raise NoDefaultRandomGeneratorError(cls.__qualname__, field.name)
 
             kwargs[field.name] = gen.get_random_params(rng)
 
@@ -459,7 +458,7 @@ class Params(metaclass=_ParamsMeta):
     @classmethod
     @final
     def from_json(cls: type[SelfParams], json: Any) -> SelfParams:
-        """Creates params instance from JSON, which was produced by ``to_json`` method.
+        """Creates params instance from JSON, which was produced by :meth:`to_json` method.
 
         >>> class NeuralNetworkParams(Params):
         ...     layer_number: int
@@ -480,8 +479,10 @@ class Params(metaclass=_ParamsMeta):
         >>> params
         DigitsTrainingParams(neural_network=NeuralNetworkParams(layer_number=5, channels=256), learning_rate=0.1)
 
-        *Warning*: ``from_json`` function *is not secure*.
-        If you do not trust the input data, please verify schema of the input JSON before calling ``from_json``.
+        .. warning::
+           :meth:`from_json` function *is not secure*.
+           If you do not trust the input data, please verify schema
+           of the input JSON before calling :meth:`from_json`.
         """  # noqa
         if not isinstance(json, dict):
             raise TypeError(f"expected dictionary (got {json=})")
@@ -541,7 +542,7 @@ class ModelParams(Generic[M], Params):
 
     Has all features of the :class:`Params` class.
 
-    Additionally, it provides ``create_model`` method, which creates
+    Additionally, it provides :meth:`create_model` method, which creates
     the model using given params.
 
     >>> class RandomForestRegressor:
@@ -581,7 +582,7 @@ class ModelParams(Generic[M], Params):
     and self.min_samples_split=8
     and self.max_features='log2'
 
-    ``create_model`` can accept additional keyword arguments, which
+    :meth:`create_model` can accept additional keyword arguments, which
     are passed to the model.
 
     >>> params = RandomForestParams(min_samples_split=8, max_features="log2")
@@ -598,11 +599,12 @@ class ModelParams(Generic[M], Params):
 
     @final
     def create_model(self, **kwargs: Any) -> M:
-        """For a class inheriting from ``ModelParams[M]``,
+        """For a class inheriting from :class:`ModelParams` [``M``],
         it returns a model of type ``M``.
 
         The model is created with arguments collected from the params.
-        Additionally, it passes arguments given directly to the ``create_model`` method.
+        Additionally, it passes arguments given directly
+        to the :meth:`create_model` method.
 
         For a class::
 
@@ -612,7 +614,7 @@ class ModelParams(Generic[M], Params):
 
             params = RandomForestParams(min_samples_split=8, max_features="log2")
 
-        calling ``create_model`` method::
+        calling :meth:`create_model` method::
 
             model = params.create_model(n_estimators=500)
 
@@ -624,7 +626,7 @@ class ModelParams(Generic[M], Params):
                 n_estimators=500,
             )
 
-        Notice, that arguments passed to ``create_model`` have precedence
+        Notice, that arguments passed to :meth:`create_model` have precedence
         over the arguments from ``params``.
         """
         m = type(self).__orig_bases__[0].__args__[0]  # type: ignore

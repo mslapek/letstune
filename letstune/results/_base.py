@@ -51,7 +51,7 @@ class TrainingStats:
 
     @property
     def duration(self) -> timedelta:
-        """Total duration of training."""
+        """Time elapsed from :attr:`start_time` to :attr:`end_time`."""
         return self.end_time - self.start_time
 
 

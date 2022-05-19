@@ -39,7 +39,7 @@ def test_normalize_training() -> None:
 
     assert t == _Training(
         training_id=602,
-        cum_duration=timedelta(minutes=4),
+        total_duration=timedelta(minutes=4),
         next_epoch=2,
         metric_value=10.0,
     )
@@ -56,7 +56,7 @@ def test_normalize_empty_training() -> None:
 
     assert t == _Training(
         training_id=602,
-        cum_duration=timedelta(),
+        total_duration=timedelta(),
         next_epoch=0,
         metric_value=0.0,
     )
@@ -88,7 +88,7 @@ def test_normalize_error_training() -> None:
 
     assert t == _Training(
         training_id=662,
-        cum_duration=timedelta(minutes=4),
+        total_duration=timedelta(minutes=4),
         next_epoch=2,
         metric_value=math.inf,
         error=True,
@@ -159,19 +159,19 @@ def test_sort() -> None:
     assert ts == [
         _Training(
             training_id=602,
-            cum_duration=timedelta(minutes=4),
+            total_duration=timedelta(minutes=4),
             next_epoch=2,
             metric_value=10.0,
         ),
         _Training(
             training_id=10,
-            cum_duration=timedelta(minutes=4),
+            total_duration=timedelta(minutes=4),
             next_epoch=2,
             metric_value=50.0,
         ),
         _Training(
             training_id=662,
-            cum_duration=timedelta(minutes=4),
+            total_duration=timedelta(minutes=4),
             next_epoch=2,
             metric_value=math.inf,
             error=True,

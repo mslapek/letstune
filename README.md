@@ -1,3 +1,3 @@
-# let's tune!
+# letstune
 
 *Hyper-parameter tuning for the masses!*

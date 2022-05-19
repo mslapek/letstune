@@ -4,12 +4,12 @@ Random params generator
 -----------------------
 
 A :class:`RandomParamsGenerator` is an object with method ``get_random_params``,
-which takes :class:`np.random.Generator` and returns a random value.
+which takes :class:`numpy.random.Generator` and returns a random value.
 
 All functions in this module return a random generator.
 Classes deriving from :class:`letstune.Params` are also random generators.
 
-Function ``oneof`` allows to compose many random generators.
+Function :func:`oneof` allows to compose many random generators.
 """
 
 from collections.abc import Sequence
@@ -20,7 +20,14 @@ import numpy as np
 
 import letstune
 
-__all__ = ["RandomParamsGenerator", "oneof", "ints", "uniform", "normal"]
+__all__ = [
+    "RandomParamsGenerator",
+    "oneof",
+    "ints",
+    "bools",
+    "uniform",
+    "normal",
+]
 
 
 T = TypeVar("T", covariant=True)
@@ -29,7 +36,7 @@ T = TypeVar("T", covariant=True)
 @runtime_checkable
 class RandomParamsGenerator(Protocol[T]):
     """An object with method ``get_random_params``,
-    which takes :class:`np.random.Generator`
+    which takes :class:`numpy.random.Generator`
     and returns a random value of type ``T``.
 
     All functions in ``letstune.rand`` module return a :class:`RandomParamsGenerator`.
@@ -54,20 +61,18 @@ def oneof(
     >>> gen.get_random_params(rng)
     8
 
-    Weights
-    -------
+    **Weights**
 
     An optional parameter ``weights`` takes relative weights of
     each candidate.
     If present, candidates with higher weight will be chosen
     more often.
 
-    Random generators
-    -----------------
+    **Random generators**
 
     If the chosen candidate has ``get_random_params`` method,
     then a result of this method is returned.
-    Therefore, ``oneof`` can be used with other random generators:
+    Therefore, :func:`oneof` can be used with other random generators:
 
     >>> gen = oneof([uniform(1, 2), uniform(4, 5)])
     >>> rng = np.random.default_rng(131)
@@ -76,11 +81,10 @@ def oneof(
     >>> gen.get_random_params(rng)  # doctest: +ELLIPSIS
     4.53...
 
-    ``oneof`` can be used with classes *deriving* from :class:`letstune.Params`:
+    :func:`oneof` can be used with classes *deriving* from :class:`letstune.Params`:
 
     >>> import letstune
     >>> from letstune import rand
-
     >>> class DigitsTrainingParams(letstune.Params):
     ...     layer_number: int = rand.oneof([1, 2, 3])
     ...     learning_rate: float = rand.uniform(0.01, 0.1)
