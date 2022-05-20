@@ -10,6 +10,7 @@ letstune
    params
    rand
    trainer
+   tune
    results
    premade
 

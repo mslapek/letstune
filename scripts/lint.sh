@@ -41,20 +41,4 @@ pytest $pytest_args
 
 ## end pytest ##
 
-## pytest examples ##
-
-examples_to_test="examples/sklearn/*.py"
-
-if [ "$TEST_TENSORFLOW" -ne 0 ]; then
-  examples_to_test="${examples_to_test} examples/keras/*.py"
-fi
-
-if [ "$TEST_XGBOOST" -ne 0 ]; then
-  examples_to_test="${examples_to_test} examples/xgboost/*.py"
-fi
-
-pytest $examples_to_test
-
-## end pytest examples ##
-
 echo "Lint OK!"

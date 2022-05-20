@@ -6,6 +6,7 @@ It does the same thing as example ``digits_sgd_simpletrainer``,
 but is more concise thanks to the :class:`letstune.sklearn.SklearnTrainer`
 helper.
 """
+from pathlib import Path
 
 import sklearn.datasets
 from sklearn.linear_model import SGDClassifier
@@ -40,29 +41,13 @@ trainer: letstune.sklearn.SklearnTrainer[
 )
 trainer.return_train_score = True
 
-trainer.load_dataset((X_train, X_test, y_train, y_test))
-
-params = SGDClassifierParams(
-    alpha=0.15,
-    average=False,
-    l1_ratio=0.033,
+tuning = letstune.tune(
+    trainer,
+    16,
+    dataset=(X_train, X_test, y_train, y_test),
+    results_dir=Path.home() / "ltexamples/digits_sgd_sklearntrainer",
 )
-model, metrics = trainer.train(params)
+print(f" DONE: {tuning}")
 
-
-def test_model_has_all_metrics() -> None:
-    assert set(metrics) == {"valid_score", "train_score"}
-
-
-def test_model_has_correct_valid_score() -> None:
-    accuracy = model.score(X_test, y_test)
-
-    assert accuracy == metrics["valid_score"]
-    assert accuracy > 0.90
-
-
-def test_model_has_correct_train_score() -> None:
-    accuracy = model.score(X_train, y_train)
-
-    assert accuracy == metrics["train_score"]
-    assert accuracy > 0.90
+model = tuning[0].checkpoint.load_pickle()
+print(f"MODEL: {model}")

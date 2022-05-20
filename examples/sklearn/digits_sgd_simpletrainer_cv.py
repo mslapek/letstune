@@ -3,7 +3,7 @@ from sklearn with cross-validation.
 
 This example is based on :class:`letstune.SimpleTrainer`.
 """
-
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -51,23 +51,10 @@ class DigitsTrainer(letstune.SimpleTrainer[SGDClassifierParams]):
 
 trainer = DigitsTrainer()
 
-trainer.load_dataset((X_train, y_train))
-
-params = SGDClassifierParams(
-    alpha=0.15,
-    average=False,
-    l1_ratio=0.033,
+tuning = letstune.tune(
+    trainer,
+    16,
+    dataset=(X_train, y_train),
+    results_dir=Path.home() / "ltexamples/digits_sgd_simpletrainer_cv",
 )
-model, metrics = trainer.train(params)
-
-
-def test_model_is_none() -> None:
-    assert model is None
-
-
-def test_model_has_all_metrics() -> None:
-    assert set(metrics) == {"mean_accuracy", "std_accuracy"}
-
-
-def test_metrics_are_good() -> None:
-    assert metrics["mean_accuracy"] > 0.90
+print(f" DONE: {tuning}")

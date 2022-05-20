@@ -11,6 +11,8 @@ helper.
 Based on `Getting started with KerasTuner \
 <https://keras.io/guides/keras_tuner/getting_started/>`_.
 """
+from datetime import timedelta
+from pathlib import Path
 
 import numpy as np
 from tensorflow import keras
@@ -62,20 +64,15 @@ trainer = letstune.keras.KerasTrainer(
     MNISTParams,
     letstune.Metric("val_accuracy"),
 )
-trainer.load_dataset((x_train, y_train, (x_val, y_val)))
 
-params = MNISTParams(units=64)
-trainer.create_model(params)
+tuning = letstune.tune(
+    trainer,
+    16,
+    dataset=(x_train, y_train, (x_val, y_val)),
+    results_dir=Path.home() / "ltexamples/keras/simple_mnist_kerastrainer",
+    training_maximum_duration=timedelta(seconds=30),
+)
+print(f" DONE: {tuning}")
 
-metrics1 = trainer.train_epoch(0)
-metrics2 = trainer.train_epoch(1)
-
-
-def test_model_has_all_metrics() -> None:
-    for m in [metrics1, metrics2]:
-        assert set(m) == {"accuracy", "loss", "val_accuracy", "val_loss"}
-
-
-def test_model_has_good_metrics() -> None:
-    assert metrics1["val_accuracy"] > 0.90
-    assert metrics2["val_accuracy"] > 0.94
+model = tuning[0].best_epoch.checkpoint.load_keras()
+print(f"MODEL: {model}")

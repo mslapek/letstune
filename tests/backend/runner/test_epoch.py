@@ -752,3 +752,27 @@ def test_original_trainer_is_not_touched(
     runner.run()
 
     assert len(trainer.log) == 0
+
+
+def test_repository_has_added_epoch_after_checkpoint_save(
+    runner: EpochRunner,
+    trainer: Trainer,
+    repository: IterableRepository,
+) -> None:
+    unified_log: list[Any] = []
+    repository.log = unified_log
+    runner._trainer.log = unified_log  # type: ignore
+
+    runner.tasks_iter = iter(
+        [
+            [
+                Task(training_id=13, next_epoch=1, duration=timedelta(minutes=2)),
+            ],
+            [],
+        ]
+    )
+
+    runner.run()
+
+    events = [e[0] for e in unified_log]
+    assert events.index("save") < events.index("add_epoch")

@@ -9,7 +9,8 @@ This example is based on :class:`letstune.EpochTrainer`.
 Based on `Getting started with KerasTuner \
 <https://keras.io/guides/keras_tuner/getting_started/>`_.
 """
-
+from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -90,26 +91,22 @@ class MNISTTrainer(letstune.EpochTrainer[MNISTParams]):
 
         return {m: v[0] for m, v in history.history.items()}
 
+    def save(self, checkpoint: Any) -> None:
+        checkpoint.save_keras(self.model)
+
+    def load(self, checkpoint: Any, params: MNISTParams) -> None:
+        self.model = checkpoint.load_keras()
+
 
 trainer = MNISTTrainer()
-trainer.load_dataset(None)
 
-params = MNISTParams(
-    dense=DenseParams(units=64, activation="relu"),
-    optimizer=AdamParams(learning_rate=1e-3, epsilon=1e-7),
-    dropout=True,
+tuning = letstune.tune(
+    trainer,
+    16,
+    results_dir=Path.home() / "ltexamples/keras/advanced_mnist_epochtrainer",
+    training_maximum_duration=timedelta(seconds=30),
 )
-trainer.create_model(params)
+print(f" DONE: {tuning}")
 
-metrics1 = trainer.train_epoch(0)
-metrics2 = trainer.train_epoch(1)
-
-
-def test_model_has_all_metrics() -> None:
-    for m in [metrics1, metrics2]:
-        assert set(m) == {"accuracy", "loss", "val_accuracy", "val_loss"}
-
-
-def test_model_has_good_metrics() -> None:
-    assert metrics1["val_accuracy"] > 0.90
-    assert metrics2["val_accuracy"] > 0.94
+model = tuning[0].best_epoch.checkpoint.load_keras()
+print(f"MODEL: {model}")

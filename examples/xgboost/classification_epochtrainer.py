@@ -1,3 +1,5 @@
+from datetime import timedelta
+from pathlib import Path
 from typing import Any
 
 import sklearn.model_selection
@@ -48,10 +50,9 @@ class ClassificationTrainer(letstune.EpochTrainer[BoosterParams]):
 
         self.y_valid = y_valid
 
-    def create_model(self, params: BoosterParams, model_file: Any = None) -> None:
+    def create_model(self, params: BoosterParams) -> None:
         self.model = params.create_model(
             cache=[self.d_train, self.d_valid],
-            model_file=model_file,
         )
 
     def train_epoch(self, epoch: int) -> dict[str, float]:
@@ -67,27 +68,26 @@ class ClassificationTrainer(letstune.EpochTrainer[BoosterParams]):
         }
 
     def load(self, checkpoint: Any, params: BoosterParams) -> None:
-        old_model = checkpoint.load_xgboost()
-        self.create_model(params, old_model)
+        self.model = checkpoint.load_xgboost(
+            lambda model_file: params.create_model(
+                cache=[self.d_train, self.d_valid],
+                model_file=model_file,
+            )
+        )
 
     def save(self, checkpoint: Any) -> None:
         checkpoint.save_xgboost(self.model)
 
 
 trainer = ClassificationTrainer()
-trainer.load_dataset(None)
 
-params = BoosterParams(max_depth=2, eta=0.5)
-trainer.create_model(params)
+tuning = letstune.tune(
+    trainer,
+    16,
+    results_dir=Path.home() / "ltexamples/xgboost/classification_epochtrainer",
+    training_maximum_duration=timedelta(seconds=2),
+)
+print(f" DONE: {tuning}")
 
-metrics = [trainer.train_epoch(epoch) for epoch in range(10)]
-
-
-def test_model_has_all_metrics() -> None:
-    for m in metrics:
-        assert set(m) == {"valid_accuracy"}
-
-
-def test_model_has_good_metrics() -> None:
-    assert metrics[0]["valid_accuracy"] > 0.5
-    assert metrics[-1]["valid_accuracy"] > 0.75
+model = tuning[0].best_epoch.checkpoint.load_xgboost()
+print(f"MODEL: {model}")

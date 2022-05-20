@@ -109,7 +109,7 @@ class _BaseTrainer(ABC, Generic[P]):
     def load_dataset(self, dataset: Any) -> None:
         """Load a dataset.
 
-        ``dataset`` is a value passed-through by the function ``letstune.tune``.
+        ``dataset`` is a value passed-through by the function :func:`letstune.tune`.
         Usually a path to a directory with training data.
 
         It is expected to save the loaded dataset to ``self``, like in this example::
