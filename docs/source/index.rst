@@ -1,3 +1,5 @@
+.. image:: _static/logo.svg
+
 letstune
 ====================================
 
@@ -13,6 +15,7 @@ letstune
    tune
    results
    premade
+   misc
 
 
 Indices and tables

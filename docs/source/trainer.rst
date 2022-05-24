@@ -63,3 +63,19 @@ Epoch trainer class
 
    .. automethod:: get_random_params
 
+
+.. _rounds:
+
+Investment rounds
+<<<<<<<<<<<<<<<<<
+
+When training with :class:`letstune.EpochTrainer`,
+*letstune* spends most of the time on the most promising
+parameters.
+
+*letstune* makes a kind of investment rounds.
+
+At the first round, it evaluates all parameters for a few epochs.
+
+Only 25% of trainings will advance to the next round.
+Trainings with the lowest metric value are automatically dropped.

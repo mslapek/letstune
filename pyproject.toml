@@ -4,6 +4,11 @@ version = "0.1.0"
 description = "Hyper-parameter tuning for the masses!"
 authors = ["Michał Słapek <28485371+mslapek@users.noreply.github.com>"]
 
+license = "MIT"
+
+readme = "README.md"
+keywords = ["machine-learning", "hyperparameter-tuning", "deep-learning"]
+
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 numpy = "^1.22.3"
