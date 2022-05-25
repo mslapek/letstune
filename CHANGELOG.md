@@ -10,6 +10,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - First version :tada: with local tuning by [@mslapek](https://github.com/mslapek).
 
-<!-- TODO: Make links to actual tags -->
-[Unreleased]: https://github.com/mslapek/letstune
-[0.1.0]: https://github.com/mslapek/letstune
+[Unreleased]: https://github.com/mslapek/letstune/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/mslapek/letstune/releases/tag/v0.1.0

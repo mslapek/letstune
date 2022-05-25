@@ -17,6 +17,7 @@ letstune
    premade
    misc
 
+`Main page and repository <https://letstune.org/>`_
 
 Indices and tables
 ==================

@@ -9,8 +9,14 @@
 *Hyper-parameter tuning for the masses!*
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-purple.svg)
+[![Documentation Status](https://readthedocs.org/projects/letstune/badge/?version=latest)](https://letstune.readthedocs.io/en/latest/?badge=latest)
+[![PyPI wheel](https://img.shields.io/pypi/wheel/letstune?color=orange&label=pip)](https://pypi.org/project/letstune/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://pycqa.github.io/isort/)
+
+* [Documentation](https://letstune.readthedocs.io/en/latest/)
+* [PyPI Package](https://pypi.org/project/letstune/)
+* [Examples](examples)
 
 ## Why?
 
@@ -54,6 +60,12 @@ Works with your favourite ML library :snake: - it's *library agnostic*!
 Permissive *business-friendly* MIT license.
 
 ## Great! How to use it?
+
+Install with *pip*:
+
+```
+pip install letstune
+```
 
 First, define your *parameters*:
 
@@ -120,6 +132,8 @@ model = tuning[0].checkpoint.load_pickle()
 ```
 
 Don't forget to check out [examples directory](examples)! :eyes:
+
+Documentation is [here](https://letstune.readthedocs.io/en/latest/)!
 
 ## References
 
