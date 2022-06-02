@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Module with class :class:`KerasTrainer`."""
 
 from typing import Any, TypeVar
@@ -80,8 +82,8 @@ class KerasTrainer(EpochTrainer[P]):
         params_cls: type[P] | RandomParamsGenerator[P],
         metric: letstune.Metric,
         *,
-        create_model_kwargs: dict[str, Any] | None = None,
-        fit_model_kwargs: dict[str, Any] | None = None,
+        create_model_kwargs: dict[str, Any] = None,
+        fit_model_kwargs: dict[str, Any] = None,
     ):
         """Create :class:`KerasTrainer`.
 

@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import time
-from typing import Any, Protocol
+from typing import Any
+
+from letstune.patch37 import Protocol
 
 __all__ = ["Logger", "NULL_LOGGER", "ConsoleLogger"]
 

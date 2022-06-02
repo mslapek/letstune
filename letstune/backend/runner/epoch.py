@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 from datetime import timedelta
-from typing import Any, Generic, Protocol, Sequence, TypeVar
+from typing import Any, Generic, Sequence, TypeVar
 
 from letstune.backend import repo
 from letstune.backend.runner import _base
 from letstune.backend.scheduler.epoch import Config, Task, get_next_tasks
 from letstune.params import Params
+from letstune.patch37 import Protocol
 from letstune.trainer import EpochTrainer
 
 P = TypeVar("P", bound=Params)
@@ -83,7 +86,7 @@ class EpochRunner(_base.Runner[P, EpochTrainer[P], Task], Generic[P]):
 
         self.logger.log(**log, sub_event="end")
 
-    def _train_epoch(self, training_id: int, epoch: int) -> timedelta | None:
+    def _train_epoch(self, training_id: int, epoch: int) -> timedelta:
         log = dict(
             event="epoch",
             training_id=training_id,

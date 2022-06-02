@@ -1,11 +1,13 @@
+from __future__ import annotations
+
 import math
 import operator
-from dataclasses import dataclass
 from datetime import timedelta
 from typing import Sequence
 
 import letstune
 from letstune.backend import repo
+from letstune.patch37 import dataclass
 
 __all__ = [
     "Task",

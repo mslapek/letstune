@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
 from datetime import datetime, timedelta
 from types import MappingProxyType
 from typing import Generic, Mapping, Sequence, TypeVar, overload
@@ -6,6 +7,7 @@ from typing import Generic, Mapping, Sequence, TypeVar, overload
 import pandas as pd
 
 from letstune import Metric, Params
+from letstune.patch37 import dataclass
 
 P = TypeVar("P", bound=Params)
 T = TypeVar("T")

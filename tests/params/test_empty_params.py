@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pickle
 
 import numpy as np
@@ -60,24 +62,3 @@ def test_pickle(params: EmptyFooParams) -> None:
 
     assert isinstance(p2, EmptyFooParams)
     assert p2 == params
-
-
-def test_has_no_dict(params: EmptyFooParams) -> None:
-    assert not hasattr(params, "__dict__")
-
-
-def test_unexpected_init_keyword_argument() -> None:
-    with pytest.raises(
-        TypeError,
-        match=r"EmptyFooParams.__init__\(\) got "
-        r"an unexpected keyword argument 'qwerty'",
-    ):
-        _ = EmptyFooParams(qwerty=5)
-
-
-def test_unexpected_init_positional_argument() -> None:
-    with pytest.raises(
-        TypeError,
-        match=r"Params.__init__\(\) takes 1 positional argument but 2 were given",
-    ):
-        _ = EmptyFooParams(56)  # type: ignore

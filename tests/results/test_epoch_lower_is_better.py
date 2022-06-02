@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from datetime import datetime, timedelta
 from types import MappingProxyType
@@ -163,11 +165,6 @@ def test_training(tuning_results: epoch.TuningResults[ModelParams]) -> None:
     assert training.round == 0
 
 
-def test_training_has_no_dict(tuning_results: epoch.TuningResults[ModelParams]) -> None:
-    training = tuning_results[1]
-    assert not hasattr(training, "__dict__")
-
-
 def test_get_epoch(tuning_results: epoch.TuningResults[ModelParams]) -> None:
     training = tuning_results[1]
     ep = training[2]
@@ -218,13 +215,6 @@ def test_epoch(tuning_results: epoch.TuningResults[ModelParams]) -> None:
     )
     assert ep.metric_value == 20.0
     assert ep.total_metric_value == 10.0
-
-
-def test_epoch_has_no_dict(tuning_results: epoch.TuningResults[ModelParams]) -> None:
-    training = tuning_results[0]
-    ep = training[2]
-
-    assert not hasattr(ep, "__dict__")
 
 
 def test_duration(tuning_results: epoch.TuningResults[ModelParams]) -> None:

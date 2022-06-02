@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 """Module with class :class:`Metric` describing goal of a tuning."""
 
-import dataclasses
 import re
+from typing import Any
+
+from letstune import patch37
 
 __all__ = [
     "Metric",
@@ -9,11 +13,11 @@ __all__ = [
 ]
 
 
-MetricValues = dict[str, float]
+MetricValues = Any
 """Dictionary with metric values from a training."""
 
 
-@dataclasses.dataclass(frozen=True, init=False, slots=True)
+@patch37.dataclass(frozen=True, init=False, slots=True)
 class Metric:
     """Goal of a tuning.
 
@@ -127,7 +131,7 @@ class Metric:
     name: str
     greater_is_better: bool
 
-    def __init__(self, name: str, *, greater_is_better: bool | None = None):
+    def __init__(self, name: str, *, greater_is_better: bool = None):
         object.__setattr__(self, "name", name)
 
         if greater_is_better is None:
@@ -151,11 +155,11 @@ def _classify_metric(name: str) -> bool:
     name = _normalize(name)
 
     for prefix in ["train", "valid", "val"]:
-        name = name.removeprefix(prefix)
+        name = patch37.removeprefix(name, prefix)
 
     neg = name.startswith("neg")
     if neg:
-        name = name.removeprefix("neg")
+        name = patch37.removeprefix(name, "neg")
 
     if _ends_with_suffix(name, ["accuracy", "acc", "score"]):
         return not neg

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import timedelta
 
 from letstune.backend.scheduler.epoch import Config, Task, _get_next_tasks, _Training

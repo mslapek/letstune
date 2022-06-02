@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Random generators, which can be used inside :class:`letstune.Params`.
 
 Random params generator
@@ -13,12 +15,12 @@ Function :func:`oneof` allows to compose many random generators.
 """
 
 from collections.abc import Sequence
-from dataclasses import dataclass
-from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 
 import letstune
+from letstune.patch37 import Protocol, dataclass
 
 __all__ = [
     "RandomParamsGenerator",
@@ -33,8 +35,7 @@ __all__ = [
 T = TypeVar("T", covariant=True)
 
 
-@runtime_checkable
-class RandomParamsGenerator(Protocol[T]):
+class RandomParamsGenerator(Protocol):
     """An object with method ``get_random_params``,
     which takes :class:`numpy.random.Generator`
     and returns a random value of type ``T``.
@@ -50,7 +51,7 @@ class RandomParamsGenerator(Protocol[T]):
 
 def oneof(
     candidates: Sequence[T | RandomParamsGenerator[T]],
-    weights: Sequence[float | int] | None = None,
+    weights: Sequence[float | int] = None,
 ) -> RandomParamsGenerator[T]:
     """Returns a randomly chosen candidate.
 
@@ -113,7 +114,7 @@ def oneof(
     if len(candidates) == 0:
         raise ValueError("got no candidates")
 
-    p: np.ndarray[Any, Any] | None
+    p: np.ndarray[Any, Any]
     if weights is not None:
         if len(weights) != len(candidates):
             raise ValueError(
@@ -132,13 +133,13 @@ def oneof(
 @dataclass(frozen=True)
 class _OneOf(Generic[T]):
     seq: Sequence[T | RandomParamsGenerator[T]]
-    p: np.ndarray[Any, Any] | None = None
+    p: np.ndarray[Any, Any] = None
 
     def get_random_params(self, rng: np.random.Generator) -> T:
         i = rng.choice(len(self.seq), p=self.p)
         v = self.seq[i]
 
-        if not isinstance(v, letstune.Params) and isinstance(v, RandomParamsGenerator):
+        if not isinstance(v, letstune.Params) and hasattr(v, "get_random_params"):
             return v.get_random_params(rng)
         else:
             return v  # type: ignore

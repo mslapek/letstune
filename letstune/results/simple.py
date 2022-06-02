@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Results of tuning using a simple trainer.
 
 :class:`TuningResults` has many :class:`Training` objects,
@@ -22,11 +24,11 @@ To unpickle the best model::
 """
 import json
 import operator
-from dataclasses import dataclass
-from typing import Any, Generic, Protocol, Sequence, TypeVar
+from typing import Any, Generic, Sequence, TypeVar
 
 from letstune import Metric, Params
 from letstune.backend import repo
+from letstune.patch37 import Protocol, dataclass
 
 from . import _base
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import pickle
 import re
@@ -111,37 +113,9 @@ def test_params_create_model(params: SimpleBarParams) -> None:
     assert v == ["123", "qwerty"]
 
 
-def test_has_no_dict(params: SimpleBarParams) -> None:
-    assert not hasattr(params, "__dict__")
-
-
-def test_unexpected_init_keyword_argument() -> None:
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            "SimpleBarParams.__init__() got an unexpected keyword argument 'zeta'"
-        ),
-    ):
-        _ = SimpleBarParams(alpha=5, beta="red", gamma=3.14, zeta=99)
-
-
-def test_unexpected_init_positional_argument() -> None:
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            "Params.__init__() takes 1 positional argument but 4 were given"
-        ),
-    ):
-        _ = SimpleBarParams(5, "red", 3.14)  # type: ignore
-
-
 def test_missing_init_keyword_argument() -> None:
     with pytest.raises(
         TypeError,
-        match=re.escape(
-            "SimpleBarParams.__init__() missing 1 "
-            "required keyword-only argument: 'beta'"
-        ),
     ):
         _ = SimpleBarParams(alpha=5, gamma=3.14)
 

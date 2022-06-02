@@ -1,9 +1,12 @@
-from typing import Any, Generic, Protocol, Sequence, TypeVar
+from __future__ import annotations
+
+from typing import Any, Generic, Sequence, TypeVar
 
 from letstune.backend import repo
 from letstune.backend.runner import _base
 from letstune.backend.scheduler.simple import Task, get_next_tasks
 from letstune.params import Params
+from letstune.patch37 import Protocol
 from letstune.trainer import SimpleTrainer
 
 __all__ = ["CheckpointFactory", "SimpleRunner"]

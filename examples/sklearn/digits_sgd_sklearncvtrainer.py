@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Training of digits classifier with ``SGDClassifier``
 from sklearn with cross-validation.
 

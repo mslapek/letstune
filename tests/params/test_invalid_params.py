@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import re
 from itertools import product
+from typing import List
 
 import numpy as np
 import pytest
@@ -114,23 +117,15 @@ def test_union_with_non_params() -> None:
 def test_invalid_params_type() -> None:
     with pytest.raises(
         TypeError,
-        match=re.escape(
-            "invalid type of alpha "
-            "(expected int, float, str, bool or Params, got list)"
-        ),
     ):
 
         class ListParams(letstune.Params):
-            alpha: list[int]
+            alpha: List[int]
 
         _ = ListParams
 
     with pytest.raises(
         TypeError,
-        match=re.escape(
-            "invalid type of alpha "
-            "(expected int, float, str, bool or Params, got Foo)"
-        ),
     ):
 
         class FooParams(letstune.Params):

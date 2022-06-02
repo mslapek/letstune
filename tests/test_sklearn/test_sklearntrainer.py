@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 import numpy as np
@@ -13,10 +15,10 @@ class MyFooModel:
     def __init__(self, **kwargs: Any) -> None:
         self.init_kwargs: dict[str, Any] = kwargs
 
-        self.fit_args: tuple[Any, ...] | None = None
-        self.fit_kwargs: dict[str, Any] | None = None
+        self.fit_args: tuple[Any, ...] = None
+        self.fit_kwargs: dict[str, Any] = None
 
-        self.score_args: tuple[Any, ...] | None = None
+        self.score_args: tuple[Any, ...] = None
         self.score_args_history: list[tuple[Any, ...]] = []
 
         self._score_iterator = iter([11.11, 22.22])

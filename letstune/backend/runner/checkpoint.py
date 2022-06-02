@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import pickle
 import shutil
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
+
+from letstune.patch37 import dataclass
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -30,7 +33,7 @@ class LocalCheckpoint:
         self._make_parent_dir()
         model.save(self.path)
 
-    def load_xgboost(self, model_factory: Callable[[Path], Any] | None = None) -> Any:
+    def load_xgboost(self, model_factory: Callable[[Path], Any] = None) -> Any:
         p = self.path / "model.json"
 
         if model_factory is None:
@@ -60,9 +63,7 @@ class CheckpointFactory:
     def __init__(self, directory: Path) -> None:
         self._directory = directory
 
-    def get_checkpoint(
-        self, training_id: int, epoch_id: int | None = None
-    ) -> LocalCheckpoint:
+    def get_checkpoint(self, training_id: int, epoch_id: int = None) -> LocalCheckpoint:
         path = self._directory / f"training{training_id}"
 
         if epoch_id is not None:

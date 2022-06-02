@@ -1,7 +1,9 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
 from typing import Sequence
 
 from letstune.backend import repo
+from letstune.patch37 import dataclass
 
 __all__ = [
     "Task",

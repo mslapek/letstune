@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pickle
 import re
 from typing import Any
@@ -128,38 +130,16 @@ def test_params_method(params: MyQwertyModelParams) -> None:
     assert v == "qwerty2"
 
 
-def test_has_no_dict(params: MyQwertyModelParams) -> None:
-    assert not hasattr(params, "__dict__")
-
-
 def test_unexpected_init_keyword_argument() -> None:
     with pytest.raises(
         TypeError,
-        match=re.escape(
-            "MyQwertyModelParams.__init__() got "
-            "an unexpected keyword argument 'zeta'"
-        ),
     ):
         _ = MyQwertyModelParams(alpha=5, beta="red", gamma=3.14, zeta=99)
-
-
-def test_unexpected_init_positional_argument() -> None:
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            "Params.__init__() takes 1 positional argument but 4 were given"
-        ),
-    ):
-        _ = MyQwertyModelParams(5, "red", 3.14)  # type: ignore
 
 
 def test_missing_init_keyword_argument() -> None:
     with pytest.raises(
         TypeError,
-        match=re.escape(
-            "MyQwertyModelParams.__init__() missing 1 "
-            "required keyword-only argument: 'beta'"
-        ),
     ):
         _ = MyQwertyModelParams(alpha=5, gamma=3.14)
 

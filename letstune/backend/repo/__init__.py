@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Mapping, Sequence
+
+from letstune.patch37 import dataclass
 
 JSON = str
 
@@ -24,7 +25,7 @@ class Training:
     training_id: int
     params: JSON
     epochs: Sequence[EpochStats] = tuple()
-    error: str | None = None
+    error: str = None
 
 
 class Repository(ABC):

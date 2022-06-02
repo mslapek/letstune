@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Base classes :class:`Params` and :class:`ModelParams`
 used to define hyper-parameters."""
 
@@ -10,13 +12,14 @@ __all__ = [
 
 import dataclasses
 import sys
-from types import UnionType
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, final
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
 
 import numpy as np
 
 from . import rand
 from .rand import RandomParamsGenerator
+
+UnionType = type(Union[int, float])
 
 SelfParams = TypeVar("SelfParams", bound="Params")
 T = TypeVar("T")
@@ -30,7 +33,7 @@ class NoDefaultRandomGeneratorError(Exception):
     def __init__(
         self,
         qualname: str,
-        field_name: str | None = None,
+        field_name: str = None,
     ) -> None:
         msg = f"class {qualname} doesn't have default random generator"
         if field_name is not None:
@@ -82,7 +85,7 @@ def _validate_field_type(field_name: str, field_type: type) -> None:
 
 
 def _random_generator_from_type(t: type[T]) -> RandomParamsGenerator[T]:
-    if isinstance(t, RandomParamsGenerator):
+    if hasattr(t, "get_random_params"):
         return t
     if t is bool:
         return rand.bools()  # type: ignore
@@ -141,7 +144,7 @@ def _validate_forbidden_methods(
 
 def _validate_leftover_generators(dct: dict[str, Any]) -> None:
     for k, v in dct.items():
-        if isinstance(v, RandomParamsGenerator):
+        if hasattr(v, "get_random_params"):
             raise TypeError(f"{k} has no type annotation")
 
 
@@ -190,14 +193,18 @@ class _ParamsMeta(type):
             "_" + name,
             fields,
             frozen=True,
-            kw_only=True,
-            slots=True,
+            # kw_only=True,
+            # slots=True,
         )
         bases = (*bases, dataclass_cls)
 
         dct["__slots__"] = tuple()
 
         return super().__new__(mcs, name, bases, dct)  # type: ignore
+
+    def __or__(self, other):
+        # patch to make work with Python 3.7
+        return Union[self, other]
 
 
 def _get_variant_name_from_json(json: Any) -> tuple[str, Any]:
@@ -382,7 +389,6 @@ class Params(metaclass=_ParamsMeta):
 
         return result
 
-    @final
     def to_json(self) -> dict[str, Any]:
         """Converts given params to JSON.
 
@@ -448,7 +454,6 @@ class Params(metaclass=_ParamsMeta):
         """  # noqa
         return self._to_json()
 
-    @final
     def _to_json(self, *, add_union_type: bool = False) -> dict[str, Any]:
         return {
             field.name: self.__field_to_json(field, add_union_type)
@@ -456,7 +461,6 @@ class Params(metaclass=_ParamsMeta):
         }
 
     @classmethod
-    @final
     def from_json(cls: type[SelfParams], json: Any) -> SelfParams:
         """Creates params instance from JSON, which was produced by :meth:`to_json` method.
 
@@ -485,7 +489,7 @@ class Params(metaclass=_ParamsMeta):
            of the input JSON before calling :meth:`from_json`.
         """  # noqa
         if not isinstance(json, dict):
-            raise TypeError(f"expected dictionary (got {json=})")
+            raise TypeError(f"expected dictionary (got {json})")
 
         args = {}
         for field in dataclasses.fields(cls):
@@ -505,7 +509,6 @@ class Params(metaclass=_ParamsMeta):
 
         return cls(**args)
 
-    @final
     def to_dict(self) -> dict[str, Any]:
         """Converts given params to a dict.
 
@@ -559,9 +562,9 @@ class ModelParams(Generic[M], Params):
     ...
     ...     def fit(self, X, y):
     ...         print(
-    ...             f"fitted with {self.n_estimators=}\\n"
-    ...             f"and {self.min_samples_split=}\\n"
-    ...             f"and {self.max_features=}"
+    ...             f"fitted with {self.n_estimators}\\n"
+    ...             f"and {self.min_samples_split}\\n"
+    ...             f"and {self.max_features}"
     ...         )
 
     >>> class RandomForestParams(ModelParams[RandomForestRegressor]):
@@ -597,7 +600,6 @@ class ModelParams(Generic[M], Params):
 
     __slots__: tuple[str, ...] = tuple()
 
-    @final
     def create_model(self, **kwargs: Any) -> M:
         """For a class inheriting from :class:`ModelParams` [``M``],
         it returns a model of type ``M``.
@@ -631,5 +633,6 @@ class ModelParams(Generic[M], Params):
         """
         m = type(self).__orig_bases__[0].__args__[0]  # type: ignore
         d = self.to_dict()
-        d |= kwargs
+        for k, v in kwargs.items():
+            d[k] = v
         return m(**d)  # type: ignore

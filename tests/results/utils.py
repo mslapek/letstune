@@ -1,7 +1,9 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
 from typing import Any
 
 import letstune
+from letstune.patch37 import dataclass
 
 
 class OptimizerParams(letstune.Params):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from letstune import __version__
 
 

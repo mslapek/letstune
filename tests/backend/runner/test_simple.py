@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
 from datetime import datetime
 from typing import Any, Iterator, Sequence
 
@@ -10,6 +11,7 @@ from letstune.backend import repo
 from letstune.backend.repo import JSON, EpochStats, Training
 from letstune.backend.scheduler.simple import Task
 from letstune.metrics import MetricValues
+from letstune.patch37 import dataclass
 
 from .utils import HistoryLogger
 

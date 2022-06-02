@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Trainers for sklearn-like models.
 
 :class:`SklearnTrainer` trains model on a train dataset,
@@ -9,11 +11,12 @@ It's a great substitution for :class:`sklearn.model_selection.GridSearchCV`!
 """
 
 from abc import ABC
-from typing import Any, Callable, Iterable, Protocol, TypeVar
+from typing import Any, Callable, Iterable, TypeVar
 
 import numpy as np
 
 import letstune
+from letstune.patch37 import Protocol
 
 from .metrics import MetricValues
 from .params import Params
@@ -33,9 +36,9 @@ class _SklearnTrainerBase(letstune.SimpleTrainer[P], ABC):
         self,
         params_cls: type[P] | RandomParamsGenerator[P],
         *,
-        create_model_kwargs: dict[str, Any] | None = None,
-        fit_model_kwargs: dict[str, Any] | None = None,
-        scorer: str | Callable[[Any, Any, Any], float] | None = None,
+        create_model_kwargs: dict[str, Any] = None,
+        fit_model_kwargs: dict[str, Any] = None,
+        scorer: str | Callable[[Any, Any, Any], float] = None,
     ):
         """Create :class:`SklearnTrainer`.
 
@@ -277,10 +280,10 @@ class SklearnCVTrainer(_SklearnTrainerBase[P]):
         self,
         params_cls: type[P] | RandomParamsGenerator[P],
         *,
-        cv: int | Splitter | None = None,
-        create_model_kwargs: dict[str, Any] | None = None,
-        fit_model_kwargs: dict[str, Any] | None = None,
-        scorer: str | Callable[[Any, Any, Any], float] | None = None,
+        cv: int | Splitter = None,
+        create_model_kwargs: dict[str, Any] = None,
+        fit_model_kwargs: dict[str, Any] = None,
+        scorer: str | Callable[[Any, Any, Any], float] = None,
     ):
         """Create :class:`SklearnCVTrainer`.
 

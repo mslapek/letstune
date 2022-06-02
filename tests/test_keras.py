@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from __future__ import annotations
+
 from typing import Any
 
 import numpy as np
@@ -8,6 +9,7 @@ from pytest_mock import MockerFixture
 import letstune
 from letstune import rand
 from letstune.keras import KerasTrainer
+from letstune.patch37 import dataclass
 
 
 @dataclass(frozen=True)
@@ -18,7 +20,7 @@ class History:
 class MyFooModel:
     def __init__(self, **kwargs: Any) -> None:
         self.init_kwargs: dict[str, Any] = kwargs
-        self.fit_kwargs: dict[str, Any] | None = None
+        self.fit_kwargs: dict[str, Any] = None
 
     def fit(self, **kwargs: Any) -> History:
         self.fit_kwargs = kwargs

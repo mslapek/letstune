@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from datetime import datetime, timedelta
 from types import MappingProxyType
@@ -138,13 +140,6 @@ def test_training_repr(tuning_results: simple.TuningResults[ModelParams]) -> Non
     training = tuning_results[1]
 
     assert repr(training) == "<Training 20; metric_value=11.1>"
-
-
-def test_training_has_no_dict(
-    tuning_results: simple.TuningResults[ModelParams],
-) -> None:
-    training = tuning_results[1]
-    assert not hasattr(training, "__dict__")
 
 
 def test_duration(tuning_results: simple.TuningResults[ModelParams]) -> None:

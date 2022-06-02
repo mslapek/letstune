@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Training of MNIST digits classifier with Keras.
 
 Parameter specification is split into many classes.

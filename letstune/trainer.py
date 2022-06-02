@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Base classes used to describe your experiment.
 
 *Trainer* is a class, which knows how to *train* a model!

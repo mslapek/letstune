@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from datetime import timedelta
 from pathlib import Path
@@ -31,8 +33,8 @@ def tune(
     params_number: int,
     *,
     dataset: Any = None,
-    training_maximum_duration: timedelta | None = None,
-    results_dir: Path | str | None = None,
+    training_maximum_duration: timedelta = None,
+    results_dir: Path | str = None,
     passthrough_errors: bool = False,
     verbose: bool = True,
 ) -> letstune.results.epoch.TuningResults[P]:
@@ -45,7 +47,7 @@ def tune(
     params_number: int,
     *,
     dataset: Any = None,
-    results_dir: Path | str | None = None,
+    results_dir: Path | str = None,
     passthrough_errors: bool = False,
     verbose: bool = True,
 ) -> letstune.results.simple.TuningResults[P]:
@@ -57,8 +59,8 @@ def tune(
     params_number: int,
     *,
     dataset: Any = None,
-    training_maximum_duration: timedelta | None = None,
-    results_dir: Path | str | None = None,
+    training_maximum_duration: timedelta = None,
+    results_dir: Path | str = None,
     passthrough_errors: bool = False,
     verbose: bool = True,
 ) -> results.epoch.TuningResults[P] | results.simple.TuningResults[P]:

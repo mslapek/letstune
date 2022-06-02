@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Training of MNIST digits classifier with Keras.
 
 Only one parameter is tuned: ``units`` in ``layers.Dense``.
