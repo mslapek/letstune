@@ -40,7 +40,7 @@ from typing import Any, Generic, Sequence, TypeVar
 from letstune import Metric, Params
 from letstune.backend import repo
 from letstune.backend.scheduler.epoch import Config
-from letstune.patch37 import Protocol, dataclass
+from letstune.patch37 import Protocol, dataclass, sum
 
 from . import _base
 

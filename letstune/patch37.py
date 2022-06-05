@@ -20,4 +20,11 @@ def removeprefix(s: str, prefix: str) -> str:
         return s[:]
 
 
+def sum(iterable, start=0):
+    for x in iterable:
+        start += x
+
+    return start
+
+
 Protocol = object
