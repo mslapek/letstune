@@ -1,5 +1,6 @@
 #!/usr/bin/env dash
-set -e
+
+. scripts/preamble.sh
 
 if [ -d ~/ltexamples ]; then
   rm -R ~/ltexamples
@@ -7,16 +8,8 @@ fi
 
 examples="examples/sklearn/*.py"
 
-if [ -z "$TEST_TENSORFLOW" ]; then
-  export TEST_TENSORFLOW=0
-fi
-
 if [ "$TEST_TENSORFLOW" -ne 0 ]; then
   examples="${examples} examples/keras/*.py"
-fi
-
-if [ -z "$TEST_XGBOOST" ]; then
-  export TEST_XGBOOST=0
 fi
 
 if [ "$TEST_XGBOOST" -ne 0 ]; then
