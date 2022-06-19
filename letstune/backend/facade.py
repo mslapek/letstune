@@ -33,8 +33,8 @@ def tune(
     params_number: int,
     *,
     dataset: Any = None,
-    training_maximum_duration: timedelta = None,
-    results_dir: Path | str = None,
+    rounds: Sequence[timedelta] | dict[str, Any] | None = None,
+    results_dir: Path | str | None = None,
     passthrough_errors: bool = False,
     verbose: bool = True,
 ) -> letstune.results.epoch.TuningResults[P]:
@@ -59,8 +59,8 @@ def tune(
     params_number: int,
     *,
     dataset: Any = None,
-    training_maximum_duration: timedelta = None,
-    results_dir: Path | str = None,
+    rounds: Sequence[timedelta] | dict[str, Any] | None = None,
+    results_dir: Path | str | None = None,
     passthrough_errors: bool = False,
     verbose: bool = True,
 ) -> results.epoch.TuningResults[P] | results.simple.TuningResults[P]:
@@ -86,15 +86,45 @@ def tune(
     to :meth:`letstune.SimpleTrainer.load_dataset`
     and :meth:`letstune.EpochTrainer.load_dataset`.
 
-    **Training maximum duration**
+    **Rounds**
 
     Only for :class:`letstune.EpochTrainer`.
 
-    Parameter ``training_maximum_duration`` sets
-    maximum total duration of the best training.
+    Parameter ``rounds`` sets durations of rounds.
 
-    Trainings eliminated earlier will have total duration
-    shorter than ``training_maximum_duration``.
+    `rounds` can be set to a :class:`list` of :class:`datetime.timedelta`::
+
+        rounds = [
+            timedelta(minutes=1),
+            timedelta(minutes=2),
+            timedelta(minutes=4),
+        ]
+
+    ``rounds`` also accepts a :class:`dict`::
+
+        rounds = {
+            'round_durations': [
+                timedelta(minutes=1),
+                timedelta(minutes=2),
+                timedelta(minutes=4),
+            ],
+        }
+
+    The dict accepts ``trainings_reduction`` key::
+
+        rounds = {
+            'round_durations': [
+                timedelta(minutes=1),
+                timedelta(minutes=2),
+                timedelta(minutes=4),
+            ],
+            'trainings_reduction': 2.0,
+        }
+
+    To the next round are promoted top ``ceil(trainings_number / trainings_reduction)``
+    trainings.
+
+    The default value for ``trainings_reduction`` is ``4.0``.
 
     **Results directory**
 
@@ -157,11 +187,9 @@ def tune(
         params_cls = _fill_with_params(repository, trainer, params_number)
 
         if isinstance(trainer, EpochTrainer):
-            if training_maximum_duration is None:
-                raise ValueError("epoch trainings require training_maximum_duration")
-            config = Config(
-                round_durations=_maximum_duration_to_rounds(training_maximum_duration),
-            )
+            if rounds is None:
+                raise ValueError("epoch trainings require rounds")
+            config = _rounds_to_config(rounds)
             runner: EpochRunner[P] | SimpleRunner[P] = EpochRunner(
                 repository=repository,
                 checkpoint_factory=checkpoint_factory,
@@ -171,10 +199,8 @@ def tune(
                 params_cls=params_cls,
             )
         else:
-            if training_maximum_duration is not None:
-                raise ValueError(
-                    "simple trainings do not take training_maximum_duration"
-                )
+            if rounds is not None:
+                raise ValueError("simple trainings do not take rounds")
             config = None
             runner = SimpleRunner(
                 repository=repository,
@@ -232,8 +258,54 @@ def _fill_with_params(
     return type(params[0])
 
 
-def _maximum_duration_to_rounds(maximum_duration: timedelta) -> tuple[timedelta, ...]:
-    weights = [4**i for i in range(4)]
-    total = sum(weights)
+def _rounds_to_config(cfg: Sequence[timedelta] | dict[str, Any]) -> Config:
+    if not isinstance(cfg, dict):
+        round_durations = _parse_round_durations(cfg, expect_dict=False)
+        trainings_reduction = 4.0
+    else:
+        if "round_durations" not in cfg:
+            raise ValueError(
+                f"expected rounds to be a dict with 'round_durations', got {cfg!r}"
+            )
 
-    return tuple((w / total) * maximum_duration for w in weights)
+        unknown_keys = set(cfg) - {"round_durations", "trainings_reduction"}
+        if len(unknown_keys) > 0:
+            unknown_key = next(iter(unknown_keys))
+            raise ValueError(f"rounds got an unexpected key {unknown_key!r}")
+
+        round_durations = cfg["round_durations"]
+        trainings_reduction = cfg.get("trainings_reduction", 4.0)
+
+        if not isinstance(trainings_reduction, (float, int)):
+            raise TypeError(
+                "expected rounds to be a dict where "
+                "rounds['trainings_reduction'] is a float",
+            )
+
+        round_durations = _parse_round_durations(round_durations, expect_dict=True)
+
+    return Config(
+        round_durations=round_durations,
+        trainings_reduction=trainings_reduction,
+    )
+
+
+def _parse_round_durations(
+    round_durations: Any, expect_dict: bool
+) -> tuple[timedelta, ...]:
+    error_message = "expected rounds to be "
+
+    if expect_dict:
+        error_message += "a dict where rounds['round_durations'] is "
+
+    error_message += "a sequence of timedelta"
+
+    if not isinstance(round_durations, Sequence):
+        raise TypeError(error_message)
+
+    round_durations = tuple(round_durations)
+
+    if not all(isinstance(d, timedelta) for d in round_durations):
+        raise TypeError(error_message)
+
+    return round_durations

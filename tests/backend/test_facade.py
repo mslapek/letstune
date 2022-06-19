@@ -1,39 +1,11 @@
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import Any, Sequence
 
 import letstune
 from letstune.backend import repo
-from letstune.backend.facade import (
-    _deduplicate_params,
-    _fill_with_params,
-    _maximum_duration_to_rounds,
-)
+from letstune.backend.facade import _deduplicate_params, _fill_with_params
 from letstune.backend.repo import JSON, EpochStats, Training
-
-
-def test_maximum_duration_to_rounds() -> None:
-    assert _maximum_duration_to_rounds(timedelta(minutes=85)) == (
-        timedelta(minutes=1),
-        timedelta(minutes=4),
-        timedelta(minutes=16),
-        timedelta(minutes=64),
-    )
-
-    assert _maximum_duration_to_rounds(timedelta(hours=1)) == (
-        timedelta(seconds=42, microseconds=352941),
-        timedelta(seconds=169, microseconds=411765),
-        timedelta(seconds=677, microseconds=647059),
-        timedelta(seconds=2710, microseconds=588235),
-    )
-
-    assert _maximum_duration_to_rounds(timedelta(minutes=15)) == (
-        timedelta(seconds=10, microseconds=588235),
-        timedelta(seconds=42, microseconds=352941),
-        timedelta(seconds=169, microseconds=411765),
-        timedelta(seconds=677, microseconds=647059),
-    )
 
 
 def test_deduplicate_params() -> None:

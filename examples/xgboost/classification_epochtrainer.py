@@ -85,9 +85,12 @@ trainer = ClassificationTrainer()
 
 tuning = letstune.tune(
     trainer,
-    16,
+    8,
     results_dir=Path.home() / "ltexamples/xgboost/classification_epochtrainer",
-    training_maximum_duration=timedelta(seconds=2),
+    rounds=[
+        timedelta(seconds=2),
+        timedelta(seconds=4),
+    ],
 )
 print(f" DONE: {tuning}")
 
