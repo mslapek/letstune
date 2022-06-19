@@ -76,43 +76,33 @@ def test_rounds_dict_with_trainings_reduction() -> None:
     )
 
 
-def test_empty_dict() -> None:
-    rounds: dict[str, Any] = {}
-
+@pytest.mark.parametrize(
+    "rounds,message",
+    [
+        (
+            {},
+            "expected rounds to be a dict with 'round_durations', got {}",
+        ),
+        (
+            {"trainings_reduction": 2.5},
+            "expected rounds to be a dict with 'round_durations', "
+            "got {'trainings_reduction': 2.5}",
+        ),
+        (
+            {"qwerty": 2.5},
+            "expected rounds to be a dict with 'round_durations', got {'qwerty': 2.5}",
+        ),
+    ],
+)
+def test_missing_round_durations(rounds: dict[str, Any], message: str) -> None:
     with pytest.raises(
         ValueError,
-        match=re.escape(
-            "expected dict with round_durations, got {}",
-        ),
+        match=re.escape(message),
     ):
         _ = _rounds_to_config(rounds)
 
 
-def test_missing_round_durations() -> None:
-    rounds = {"trainings_reduction": 2.5}
-
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            "expected dict with round_durations, got {'trainings_reduction': 2.5}"
-        ),
-    ):
-        _ = _rounds_to_config(rounds)
-
-
-def test_wrong_key_in_dict() -> None:
-    rounds = {"qwerty": 2.5}
-
-    with pytest.raises(
-        ValueError,
-        match=re.escape(
-            "expected dict with round_durations, got {'qwerty': 2.5}",
-        ),
-    ):
-        _ = _rounds_to_config(rounds)
-
-
-def test_wrong_key_in_dict2() -> None:
+def test_unexpected_key_in_dict() -> None:
     rounds = {
         "round_durations": [
             timedelta(minutes=2),
@@ -122,11 +112,7 @@ def test_wrong_key_in_dict2() -> None:
 
     with pytest.raises(
         ValueError,
-        match=re.escape(
-            "expected dict with round_durations, "
-            "got {'round_durations': "
-            "[datetime.timedelta(seconds=120)], 'qwerty': 2.5}",
-        ),
+        match=re.escape("rounds got an unexpected key 'qwerty'"),
     ):
         _ = _rounds_to_config(rounds)
 
@@ -138,8 +124,11 @@ def test_wrong_trainings_reduction_type() -> None:
     }
 
     with pytest.raises(
-        ValueError,
-        match=re.escape("expected trainings_reduction with float"),
+        TypeError,
+        match=re.escape(
+            "expected rounds to be a dict where "
+            "rounds['trainings_reduction'] is a float",
+        ),
     ):
         _ = _rounds_to_config(rounds)
 
@@ -151,8 +140,11 @@ def test_dict_wrong_round_durations_content_type() -> None:
     }
 
     with pytest.raises(
-        ValueError,
-        match=re.escape("expected round_durations with sequence of timedelta"),
+        TypeError,
+        match=re.escape(
+            "expected rounds to be a dict where "
+            "rounds['round_durations'] is a sequence of timedelta",
+        ),
     ):
         _ = _rounds_to_config(rounds)
 
@@ -161,8 +153,10 @@ def test_list_wrong_round_durations_content_type() -> None:
     rounds = ["hello"]
 
     with pytest.raises(
-        ValueError,
-        match=re.escape("expected round_durations with sequence of timedelta"),
+        TypeError,
+        match=re.escape(
+            "expected rounds to be a sequence of timedelta",
+        ),
     ):
         _ = _rounds_to_config(rounds)  # type: ignore
 
@@ -174,8 +168,11 @@ def test_dict_wrong_round_durations_type() -> None:
     }
 
     with pytest.raises(
-        ValueError,
-        match=re.escape("expected round_durations with sequence of timedelta"),
+        TypeError,
+        match=re.escape(
+            "expected rounds to be a dict where "
+            "rounds['round_durations'] is a sequence of timedelta",
+        ),
     ):
         _ = _rounds_to_config(rounds)
 
@@ -184,7 +181,9 @@ def test_list_wrong_round_durations_type() -> None:
     rounds = 345
 
     with pytest.raises(
-        ValueError,
-        match=re.escape("expected round_durations with sequence of timedelta"),
+        TypeError,
+        match=re.escape(
+            "expected rounds to be a sequence of timedelta",
+        ),
     ):
         _ = _rounds_to_config(rounds)  # type: ignore

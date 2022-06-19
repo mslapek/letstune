@@ -258,27 +258,52 @@ def _fill_with_params(
 
 def _rounds_to_config(cfg: Sequence[timedelta] | dict[str, Any]) -> Config:
     if not isinstance(cfg, dict):
-        cfg = {"round_durations": cfg}
+        round_durations = _parse_round_durations(cfg, expect_dict=False)
+        trainings_reduction = 4.0
+    else:
+        if "round_durations" not in cfg:
+            raise ValueError(
+                f"expected rounds to be a dict with 'round_durations', got {cfg!r}"
+            )
 
-    unknown_keys = set(cfg) - {"round_durations", "trainings_reduction"}
-    if "round_durations" not in cfg or len(unknown_keys) > 0:
-        raise ValueError(f"expected dict with round_durations, got {cfg!r}")
+        unknown_keys = set(cfg) - {"round_durations", "trainings_reduction"}
+        if len(unknown_keys) > 0:
+            unknown_key = next(iter(unknown_keys))
+            raise ValueError(f"rounds got an unexpected key {unknown_key!r}")
 
-    round_durations = cfg["round_durations"]
-    trainings_reduction = cfg.get("trainings_reduction", 4.0)
+        round_durations = cfg["round_durations"]
+        trainings_reduction = cfg.get("trainings_reduction", 4.0)
 
-    if not isinstance(trainings_reduction, (float, int)):
-        raise ValueError("expected trainings_reduction with float")
+        if not isinstance(trainings_reduction, (float, int)):
+            raise TypeError(
+                "expected rounds to be a dict where "
+                "rounds['trainings_reduction'] is a float",
+            )
 
-    if not isinstance(round_durations, Sequence):
-        raise ValueError("expected round_durations with sequence of timedelta")
-
-    round_durations = tuple(round_durations)
-
-    if not all(isinstance(d, timedelta) for d in round_durations):
-        raise ValueError("expected round_durations with sequence of timedelta")
+        round_durations = _parse_round_durations(round_durations, expect_dict=True)
 
     return Config(
         round_durations=round_durations,
         trainings_reduction=trainings_reduction,
     )
+
+
+def _parse_round_durations(
+    round_durations: Any, expect_dict: bool
+) -> tuple[timedelta, ...]:
+    error_message = "expected rounds to be "
+
+    if expect_dict:
+        error_message += "a dict where rounds['round_durations'] is "
+
+    error_message += "a sequence of timedelta"
+
+    if not isinstance(round_durations, Sequence):
+        raise TypeError(error_message)
+
+    round_durations = tuple(round_durations)
+
+    if not all(isinstance(d, timedelta) for d in round_durations):
+        raise TypeError(error_message)
+
+    return round_durations
