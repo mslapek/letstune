@@ -9,6 +9,10 @@ license = "MIT"
 readme = "README.md"
 keywords = ["machine-learning", "hyperparameter-tuning", "deep-learning"]
 
+homepage = "https://www.letstune.org/"
+repository = "https://github.com/mslapek/letstune"
+documentation = "https://letstune.readthedocs.io/"
+
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 numpy = "^1.22.3"
