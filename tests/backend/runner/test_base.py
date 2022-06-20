@@ -11,11 +11,7 @@ def is_normalized(metric_values: Any) -> bool:
     if type(metric_values) is not dict:
         return False
 
-    for k, v in metric_values.items():
-        if not (type(k) == str and type(v) == float):
-            return False
-
-    return True
+    return all(type(k) == str and type(v) == float for k, v in metric_values.items())
 
 
 def test_empty_dict() -> None:

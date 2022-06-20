@@ -257,8 +257,6 @@ def test_successful_tasks(
 def test_metric_values_normalization(
     runner: SimpleRunner,
     repository: Repository,
-    dataset: object,
-    logger: HistoryLogger,
 ) -> None:
     runner.test_tasks = [
         Task(training_id=13),

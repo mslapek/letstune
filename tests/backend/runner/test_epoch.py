@@ -538,8 +538,6 @@ def test_successful_tasks(
 def test_metric_values_normalization(
     runner: EpochRunner,
     repository: IterableRepository,
-    dataset: object,
-    logger: HistoryLogger,
 ) -> None:
     runner.run()
 
