@@ -54,6 +54,7 @@ class SimpleRunner(_base.Runner[P, SimpleTrainer[P], Task], Generic[P]):
             return
 
         model, metric_values = result
+        metric_values = _base.normalize_metric_values(metric_values)
 
         chk = self._checkpoint_factory.get_checkpoint(task.training_id)
         self._trainer.save(chk, model)
