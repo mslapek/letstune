@@ -21,7 +21,7 @@ jobs:
         run: poetry env use $(which python3.10)
 
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --no-root
 
       - name: Lint
         run: poetry run ./scripts/lint.sh
