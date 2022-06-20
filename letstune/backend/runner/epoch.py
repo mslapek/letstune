@@ -102,6 +102,8 @@ class EpochRunner(_base.Runner[P, EpochTrainer[P], Task], Generic[P]):
             self.logger.log(**log, sub_event="end", status="failure")
             return None
 
+        metric_values = _base.normalize_metric_values(metric_values)
+
         chk = self._checkpoint_factory.get_checkpoint(training_id, epoch)
         self._trainer.save(chk)
         self._repository.add_epoch(

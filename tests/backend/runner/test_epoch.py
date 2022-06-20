@@ -4,6 +4,7 @@ import itertools
 from datetime import datetime, timedelta
 from typing import Any, Iterable, Iterator, Sequence
 
+import numpy as np
 import pytest
 
 import letstune.backend.runner
@@ -137,7 +138,7 @@ class Trainer(letstune.EpochTrainer[ModelParams]):
 
         return {
             "accuracy": float(self.params.alpha),
-            "f_score": float(epoch),
+            "f_score": np.float32(epoch),  # type: ignore
         }
 
     def load_dataset(self, dataset: Any) -> None:
@@ -534,6 +535,19 @@ def test_successful_tasks(
         },
         {"event": "round", "sub_event": "end", "tasks_count": 1},
     ]
+
+
+def test_metric_values_normalization(
+    runner: EpochRunner,
+    repository: IterableRepository,
+) -> None:
+    runner.run()
+
+    for event in repository.log:
+        epoch_stats = event[2]
+        assert isinstance(epoch_stats, EpochStats)
+
+        assert all(type(v) == float for v in epoch_stats.metric_values.values())
 
 
 def test_failed_tasks(

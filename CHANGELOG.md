@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Trainers can return `np.float32` and `np.float64` in `metric_values`. Backend gives a friendly error message in case of malformed `metric_values`.
+
 ### Changed
 - Replace `training_maximum_duration` in `letstune.tune` with `rounds` parameter.
 
