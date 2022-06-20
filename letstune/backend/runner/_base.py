@@ -93,3 +93,33 @@ class Runner(Generic[P, Trainer, Task]):
 
 def clone_trainer(t: T) -> T:
     return pickle.loads(pickle.dumps(t))  # type: ignore
+
+
+def _metric_values_type_error(metric_values: Any) -> TypeError:
+    raise TypeError(
+        f"expected metric_values to be a dict of floats, got {metric_values!r}",
+    )
+
+
+def normalize_metric_values(metric_values: Any) -> dict[str, float]:
+    if not isinstance(metric_values, dict):
+        raise _metric_values_type_error(metric_values)
+
+    result: dict[str, float] = dict()
+
+    for k, v in metric_values.items():
+        if type(k) != str:
+            raise _metric_values_type_error(metric_values)
+
+        if hasattr(v, "__float__"):
+            v = float(v)
+
+        if type(v) != float:
+            raise _metric_values_type_error(metric_values)
+
+        result[k] = v
+
+    if len(result) == 0:
+        raise ValueError("got empty dict instead of metric values")
+
+    return result

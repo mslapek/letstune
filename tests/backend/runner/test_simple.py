@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Iterator, Sequence
 
+import numpy as np
 import pytest
 
 import letstune.backend.runner
@@ -109,7 +110,7 @@ class Trainer(letstune.SimpleTrainer[ModelParams]):
 
         return Model(params), {
             "accuracy": float(params.alpha),
-            "f_score": -float(params.alpha),
+            "f_score": -np.float32(params.alpha),  # type: ignore
         }
 
     def load_dataset(self, dataset: Any) -> None:
@@ -251,6 +252,24 @@ def test_successful_tasks(
         },
         {"event": "round", "sub_event": "end", "tasks_count": 2},
     ]
+
+
+def test_metric_values_normalization(
+    runner: SimpleRunner,
+    repository: Repository,
+) -> None:
+    runner.test_tasks = [
+        Task(training_id=13),
+        Task(training_id=20),
+    ]
+
+    runner.run()
+
+    for event in repository.log:
+        epoch_stats = event[2]
+        assert isinstance(epoch_stats, EpochStats)
+
+        assert all(type(v) == float for v in epoch_stats.metric_values.values())
 
 
 def test_failed_tasks(
