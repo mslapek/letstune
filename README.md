@@ -13,6 +13,7 @@
 [![PyPI wheel](https://img.shields.io/pypi/wheel/letstune?color=orange&label=pip)](https://pypi.org/project/letstune/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat)](https://pycqa.github.io/isort/)
+![Lint and test workflow](https://github.com/mslapek/letstune/actions/workflows/linttest.yml/badge.svg)
 
 * [Documentation](https://letstune.readthedocs.io/en/latest/)
 * [PyPI Package](https://pypi.org/project/letstune/)
