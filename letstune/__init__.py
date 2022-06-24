@@ -8,7 +8,7 @@ __all__ = [
     "tune",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.3.0-dev"
 
 
 from .metrics import Metric
