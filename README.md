@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="img/logo.svg"><br>
+  <img src="https://raw.githubusercontent.com/mslapek/letstune/main/img/logo.svg"><br>
 </div>
 
 -----------------
@@ -143,3 +143,8 @@ Documentation is [here](https://letstune.readthedocs.io/en/latest/)!
 
 Overview of various hyperparameter-tuning algorithms.
 _letstune_ implements a variant of Successive Halving.
+
+## Are you a cloud provider?
+
+Check out [README](https://github.com/mslapek)
+about *letstune* and *cloud providers*.
