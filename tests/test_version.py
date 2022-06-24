@@ -3,7 +3,7 @@ from pathlib import Path
 
 from letstune import __version__
 
-EXPECTED_VERSION = "0.2.0"
+EXPECTED_VERSION = "0.3.0-dev"
 IS_DEV_VERSION = EXPECTED_VERSION.endswith("-dev")
 
 

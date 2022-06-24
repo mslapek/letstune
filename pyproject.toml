@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "letstune"
-version = "0.2.0"
+version = "0.3.0-dev"
 description = "Hyper-parameter tuning for the masses!"
 authors = ["Michał Słapek <28485371+mslapek@users.noreply.github.com>"]
 
