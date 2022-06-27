@@ -119,7 +119,10 @@ class KerasTrainer(EpochTrainer[P]):
         self.__metric = metric
         self.__random_params_generator = params_cls
         self.__create_model_kwargs = create_model_kwargs or {}
-        self.__fit_model_kwargs = fit_model_kwargs or {}
+
+        self.__fit_model_kwargs = {"verbose": 0}
+        if fit_model_kwargs:
+            self.__fit_model_kwargs.update(fit_model_kwargs)
 
     @property
     def metric(self) -> letstune.Metric:

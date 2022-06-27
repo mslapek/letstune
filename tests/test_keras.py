@@ -126,6 +126,7 @@ def test_train_epoch() -> None:
         "y": "array2",
         "epochs": 6,
         "initial_epoch": 5,
+        "verbose": 0,
     }
 
     assert scores == {"qwerty": 13.33, "foobar": 99.0}
@@ -148,6 +149,7 @@ def test_train_epoch_with_valid() -> None:
         "validation_data": "obj3",
         "epochs": 1,
         "initial_epoch": 0,
+        "verbose": 0,
     }
 
     assert scores == {"qwerty": 13.33, "foobar": 99.0}
@@ -175,6 +177,7 @@ def test_train_epoch_kwargs() -> None:
         "foo": 58,
         "epochs": 6,
         "initial_epoch": 5,
+        "verbose": 0,
     }
 
     assert scores == {"qwerty": 13.33, "foobar": 99.0}
@@ -203,6 +206,35 @@ def test_train_epoch_kwargs_with_valid() -> None:
         "foo": 58,
         "epochs": 6,
         "initial_epoch": 5,
+        "verbose": 0,
+    }
+
+    assert scores == {"qwerty": 13.33, "foobar": 99.0}
+
+
+def test_train_epoch_kwargs_with_custom_verbose() -> None:
+    trainer = KerasTrainer(
+        MyParams,
+        letstune.Metric("accuracy"),
+        fit_model_kwargs={"color": "blue", "foo": 58, "verbose": 123},
+    )
+    trainer.load_dataset(("array1", "array2"))
+    params = MyParams(x=12)
+    trainer.create_model(params)
+
+    scores = trainer.train_epoch(5)
+
+    model = trainer.model
+    assert isinstance(model, MyFooModel)
+    assert model.init_kwargs == {"x": 12}
+    assert model.fit_kwargs == {
+        "x": "array1",
+        "y": "array2",
+        "color": "blue",
+        "foo": 58,
+        "epochs": 6,
+        "initial_epoch": 5,
+        "verbose": 123,
     }
 
     assert scores == {"qwerty": 13.33, "foobar": 99.0}
