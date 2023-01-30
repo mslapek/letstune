@@ -1,5 +1,6 @@
 .mypy_cache/
 .idea/
+.vscode/
 __pycache__/
 docs/build
 dist/
