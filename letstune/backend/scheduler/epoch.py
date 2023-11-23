@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Sequence
 
-import letstune
 from letstune.backend import repo
 
 __all__ = [
@@ -40,22 +39,16 @@ class _Training:
 
 
 def _normalize_training(
-    metric: letstune.Metric,
+    metric: str,
     t: repo.Training,
 ) -> _Training:
     if t.error is not None:
-        if metric.greater_is_better:
-            metric_value = -math.inf
-        else:
-            metric_value = math.inf
+        metric_value = -math.inf
     elif len(t.epochs) == 0:
         metric_value = 0.0
     else:
-        metric_values = (e.metric_values[metric.name] for e in t.epochs)
-        if metric.greater_is_better:
-            metric_value = max(metric_values)
-        else:
-            metric_value = min(metric_values)
+        metric_values = (e.metric_values[metric] for e in t.epochs)
+        metric_value = max(metric_values)
 
     return _Training(
         training_id=t.training_id,
@@ -70,7 +63,7 @@ def _normalize_training(
 
 
 def _normalize(
-    metric: letstune.Metric,
+    metric: str,
     trainings: Sequence[repo.Training],
 ) -> list[_Training]:
     """Get sorted trainings."""
@@ -78,14 +71,14 @@ def _normalize(
     ts = [_normalize_training(metric, t) for t in trainings]
     ts.sort(
         key=operator.attrgetter("metric_value"),
-        reverse=metric.greater_is_better,
+        reverse=True,
     )
     return ts
 
 
 def get_next_tasks(
     config: Config,
-    metric: letstune.Metric,
+    metric: str,
     trainings: Sequence[repo.Training],
 ) -> list[Task]:
     ts = _normalize(metric, trainings)

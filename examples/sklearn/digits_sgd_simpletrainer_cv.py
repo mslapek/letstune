@@ -13,7 +13,7 @@ from sklearn.model_selection import cross_val_score, train_test_split
 
 import letstune
 from letstune import rand
-from letstune.metrics import MetricValues
+from letstune.trainer import MetricValues
 
 X, y = sklearn.datasets.load_digits(return_X_y=True)
 
@@ -29,7 +29,7 @@ class SGDClassifierParams(letstune.ModelParams[SGDClassifier]):
 
 
 class DigitsTrainer(letstune.SimpleTrainer[SGDClassifierParams]):
-    metric = letstune.Metric("mean_accuracy")
+    metric = "mean_accuracy"
 
     def load_dataset(self, dataset: Any) -> None:
         self.X, self.y = dataset

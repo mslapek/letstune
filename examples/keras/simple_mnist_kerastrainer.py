@@ -62,7 +62,7 @@ class MNISTParams(letstune.Params):
 
 trainer = letstune.keras.KerasTrainer(
     MNISTParams,
-    letstune.Metric("val_accuracy"),
+    "val_accuracy",
 )
 
 tuning = letstune.tune(

@@ -7,7 +7,6 @@ import pandas as pd
 import pytest
 from pandas import Timedelta, Timestamp
 
-import letstune
 from letstune.backend import repo
 from letstune.backend.scheduler.epoch import Config
 from letstune.results import epoch, simple
@@ -15,7 +14,7 @@ from letstune.results import epoch, simple
 from . import utils
 from .utils import AnotherOptimizerParams, OptimizerParams, UnionModelParams
 
-METRIC = letstune.Metric("accuracy")
+METRIC = "accuracy"
 
 
 @pytest.fixture

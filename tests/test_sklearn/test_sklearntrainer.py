@@ -134,14 +134,14 @@ def test_load_dataset_optimize_train_score_with_invalid_argument() -> None:
 def test_metric() -> None:
     trainer = SklearnTrainer(MyParams)
 
-    assert trainer.metric == letstune.Metric("valid_score", greater_is_better=True)
+    assert trainer.metric == "valid_score"
 
 
 def test_metric_optimize_train_score() -> None:
     trainer = SklearnTrainer(MyParams)
     trainer.optimize_train_score = True
 
-    assert trainer.metric == letstune.Metric("train_score", greater_is_better=True)
+    assert trainer.metric == "train_score"
 
 
 def test_train() -> None:

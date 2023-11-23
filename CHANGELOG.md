@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `letstune.keras.KerasTrainer` calls `model.fit` with turned off Keras logging (`verbose=0`). 
 
+### Removed
+- Remove `letstune.Metric` class. Replace it with `str`. Now metrics are always greater-is-better.
+
 ## [0.2.0] - 2022-06-24
 ### Added
 - Trainers can return `np.float32` and `np.float64` in `metric_values`. Backend gives a friendly error message in case of malformed `metric_values`.

@@ -71,7 +71,7 @@ class SimpleRunner(_base.Runner[P, SimpleTrainer[P], Task], Generic[P]):
         self.logger.log(
             **log,
             sub_event="stop",
-            metric_value=metric_values.get(self._metric.name),
+            metric_value=metric_values.get(self._metric),
         )
 
     def _get_next_tasks(self, trainings: Sequence[repo.Training]) -> list[Task]:

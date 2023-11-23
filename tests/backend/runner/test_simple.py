@@ -10,7 +10,7 @@ import letstune.backend.runner.simple
 from letstune.backend import repo
 from letstune.backend.repo import JSON, EpochStats, Training
 from letstune.backend.scheduler.simple import Task
-from letstune.metrics import MetricValues
+from letstune.trainer import MetricValues
 
 from .utils import HistoryLogger
 
@@ -97,7 +97,7 @@ class SimpleCheckpointFactory:
 
 
 class Trainer(letstune.SimpleTrainer[ModelParams]):
-    metric = letstune.Metric("accuracy")
+    metric = "accuracy"
 
     def __init__(self) -> None:
         self.log: list[Any] = []

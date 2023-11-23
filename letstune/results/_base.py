@@ -5,7 +5,7 @@ from typing import Generic, Mapping, Sequence, TypeVar, overload
 
 import pandas as pd
 
-from letstune import Metric, Params
+from letstune import Params
 
 P = TypeVar("P", bound=Params)
 T = TypeVar("T")
@@ -73,7 +73,7 @@ def _format_quantity(n: int, what: str) -> str:
 
 
 class TuningResults(SequenceProxy[T], Generic[P, T, E]):
-    _metric: Metric
+    _metric: str
     _errors: tuple[E, ...]
 
     def to_df(self) -> pd.DataFrame:
@@ -85,7 +85,7 @@ class TuningResults(SequenceProxy[T], Generic[P, T, E]):
         return pd.json_normalize([t._to_json() for t in self])  # type: ignore
 
     @property
-    def metric(self) -> Metric:
+    def metric(self) -> str:
         """Metric used in the tuning."""
         return self._metric
 

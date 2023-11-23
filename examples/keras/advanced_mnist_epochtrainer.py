@@ -58,7 +58,7 @@ class MNISTParams(letstune.Params):
 
 
 class MNISTTrainer(letstune.EpochTrainer[MNISTParams]):
-    metric = letstune.Metric("val_accuracy")
+    metric = "val_accuracy"
 
     def load_dataset(self, dataset: Any) -> None:
         (x, y), (x_test, y_test) = keras.datasets.mnist.load_data()

@@ -64,7 +64,7 @@ class MNISTParams(letstune.Params):
 
 class MNISTTrainer(letstune.keras.KerasTrainer[MNISTParams]):
     def __init__(self) -> None:
-        super().__init__(MNISTParams, letstune.Metric("val_accuracy"))
+        super().__init__(MNISTParams, "val_accuracy")
 
     def load_dataset(self, dataset: Any) -> None:
         (x, y), _ = keras.datasets.mnist.load_data()

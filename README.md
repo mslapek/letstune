@@ -81,7 +81,7 @@ Then define a **trainer**.
 
 ```python
 class DigitsTrainer(letstune.SimpleTrainer[SGDClassifierParams]):
-    metric = letstune.Metric("accuracy")
+    metric = "accuracy"
 
     def load_dataset(self, dataset):
         self.X_train, self.X_test, self.y_train, self.y_test = dataset

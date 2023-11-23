@@ -36,7 +36,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Generic, Protocol, Sequence, TypeVar
 
-from letstune import Metric, Params
+from letstune import Params
 from letstune.backend import repo
 from letstune.backend.scheduler.epoch import Config
 
@@ -99,7 +99,7 @@ class Training(_base.SequenceProxy[Epoch], Generic[P]):
     params: P
     round: int
     _sequence: tuple[Epoch, ...]
-    _metric: Metric
+    _metric: str
 
     @property
     def start_time(self) -> datetime:
@@ -119,8 +119,7 @@ class Training(_base.SequenceProxy[Epoch], Generic[P]):
     @property
     def best_epoch(self) -> Epoch:
         """The best epoch in the training."""
-        cmp = max if self._metric.greater_is_better else min
-        return cmp(
+        return max(
             self,
             key=operator.attrgetter("metric_value"),
         )
@@ -173,23 +172,18 @@ class TuningResults(_base.TuningResults[P, Training[P], Error]):
 
 
 def _build_training(
-    metric: Metric,
+    metric: str,
     checkpoint_factory: CheckpointFactory,
     params_cls: type[P],
     training: repo.Training,
 ) -> Training[P]:
     epochs = []
-    total_metric_value = -math.inf if metric.greater_is_better else math.inf
+    total_metric_value = -math.inf
     total_duration = timedelta()
 
     for e in training.epochs:
-        metric_value = e.metric_values[metric.name]
-
-        if metric.greater_is_better:
-            total_metric_value = max(total_metric_value, metric_value)
-        else:
-            total_metric_value = min(total_metric_value, metric_value)
-
+        metric_value = e.metric_values[metric]
+        total_metric_value = max(total_metric_value, metric_value)
         total_duration += e.duration
 
         ep = Epoch()
@@ -234,7 +228,7 @@ def _get_rounds(config: Config, trainings_count: int) -> list[int]:
 
 def build(
     *,
-    metric: Metric,
+    metric: str,
     checkpoint_factory: CheckpointFactory,
     params_cls: type[P],
     trainings: Sequence[repo.Training],
@@ -276,7 +270,7 @@ def build(
 
     valid_ts.sort(
         key=operator.attrgetter("metric_value"),
-        reverse=metric.greater_is_better,
+        reverse=True,
     )
 
     rounds = _get_rounds(config, len(trainings))

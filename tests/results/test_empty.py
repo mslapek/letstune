@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 import pytest
 
-import letstune
 from letstune.backend import repo
 from letstune.backend.scheduler.epoch import Config
 from letstune.results import epoch, simple
@@ -10,7 +9,7 @@ from letstune.results import epoch, simple
 from . import utils
 from .utils import ModelParams
 
-METRIC = letstune.Metric("accuracy")
+METRIC = "accuracy"
 
 
 def test_simple_tuning_must_be_non_empty() -> None:

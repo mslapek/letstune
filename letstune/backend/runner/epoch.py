@@ -116,7 +116,7 @@ class EpochRunner(_base.Runner[P, EpochTrainer[P], Task], Generic[P]):
         self.logger.log(
             **log,
             sub_event="end",
-            metric_value=metric_values.get(self._metric.name),
+            metric_value=metric_values.get(self._metric),
         )
 
         return end_time - start_time

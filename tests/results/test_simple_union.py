@@ -7,14 +7,13 @@ import pandas as pd
 import pytest
 from pandas import Timedelta, Timestamp
 
-import letstune
 from letstune.backend import repo
 from letstune.results import simple
 
 from . import utils
 from .utils import AnotherOptimizerParams, OptimizerParams, UnionModelParams
 
-METRIC = letstune.Metric("accuracy")
+METRIC = "accuracy"
 
 
 @pytest.fixture

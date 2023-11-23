@@ -21,9 +21,10 @@ for instance::
         "valid_f1_score": 0.66,
     }
 
-Each trainer has a field ``metric`` of the type :class:`letstune.Metric`.
+Each trainer has a field ``metric``, which is a string.
 
-``metric.name`` declares, which metric value should be optimized by letstune.
+``metric`` declares, which metric value should be optimized by letstune.
+The chosen metric is always greater-is-better.
 Other metric values are stored only for an analysis after a tuning.
 
 Serialization
@@ -53,13 +54,17 @@ import numpy as np
 
 import letstune
 
-from .metrics import Metric, MetricValues
 from .params import Params
 
 __all__ = [
     "SimpleTrainer",
     "EpochTrainer",
+    "MetricValues",
 ]
+
+
+MetricValues = dict[str, float]
+"""Dictionary with metric values from a training."""
 
 P = TypeVar("P", bound=Params)
 
@@ -88,11 +93,12 @@ class _BaseTrainer(ABC, Generic[P]):
 
     @property
     @abstractmethod
-    def metric(self) -> Metric:
+    def metric(self) -> str:
         """Goal of a tuning.
 
-        Methods ``train`` and ``train_epoch`` must return a dict containing
-        name of this metric."""
+        Methods ``train`` and ``train_epoch`` must return a dict containing this metric.
+        Always interpreted as greater is better.
+        """
         pass
 
     def get_random_params(self, rng: np.random.Generator) -> P:
