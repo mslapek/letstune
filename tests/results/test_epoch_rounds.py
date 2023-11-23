@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 
 import pytest
 
-import letstune
 from letstune.backend import repo
 from letstune.backend.scheduler.epoch import Config
 from letstune.results import epoch
@@ -11,7 +10,7 @@ from letstune.results import epoch
 from . import utils
 from .utils import ModelParams, OptimizerParams
 
-METRIC = letstune.Metric("accuracy")
+METRIC = "accuracy"
 
 
 @pytest.fixture

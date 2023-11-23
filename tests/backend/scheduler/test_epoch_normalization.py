@@ -1,11 +1,10 @@
 import math
 from datetime import datetime, timedelta
 
-from letstune import Metric
 from letstune.backend import repo
 from letstune.backend.scheduler.epoch import _normalize, _normalize_training, _Training
 
-METRIC = Metric("accuracy")
+METRIC = "accuracy"
 
 
 def test_empty() -> None:

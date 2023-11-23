@@ -25,7 +25,7 @@ import operator
 from dataclasses import dataclass
 from typing import Any, Generic, Protocol, Sequence, TypeVar
 
-from letstune import Metric, Params
+from letstune import Params
 from letstune.backend import repo
 
 from . import _base
@@ -93,7 +93,7 @@ class TuningResults(_base.TuningResults[P, Training[P], Error]):
 
 
 def _build_training(
-    metric: Metric,
+    metric: str,
     checkpoint_factory: CheckpointFactory,
     params_cls: type[P],
     training: repo.Training,
@@ -108,7 +108,7 @@ def _build_training(
     object.__setattr__(
         t, "metric_values", _base.freeze_metric_values(epoch.metric_values)
     )
-    object.__setattr__(t, "metric_value", epoch.metric_values[metric.name])
+    object.__setattr__(t, "metric_value", epoch.metric_values[metric])
     object.__setattr__(t, "_checkpoint_factory", checkpoint_factory)
 
     return t
@@ -116,7 +116,7 @@ def _build_training(
 
 def build(
     *,
-    metric: Metric,
+    metric: str,
     checkpoint_factory: CheckpointFactory,
     params_cls: type[P],
     trainings: Sequence[repo.Training],
@@ -157,7 +157,7 @@ def build(
 
     valid_ts.sort(
         key=operator.attrgetter("metric_value"),
-        reverse=metric.greater_is_better,
+        reverse=True,
     )
 
     r: TuningResults[P] = TuningResults()

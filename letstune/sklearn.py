@@ -15,9 +15,9 @@ import numpy as np
 
 import letstune
 
-from .metrics import MetricValues
 from .params import Params
 from .rand import RandomParamsGenerator
+from .trainer import MetricValues
 
 __all__ = ["SklearnTrainer", "SklearnCVTrainer", "Splitter"]
 
@@ -149,7 +149,7 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
 
     >>> trainer = SklearnTrainer(MyParams)
     >>> trainer.metric
-    Metric(name='valid_score', greater_is_better=True)
+    'valid_score'
 
     Metric ``valid_score`` is calculated using ``(X_valid, y_valid)``.
 
@@ -170,7 +170,7 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
     >>> trainer = SklearnTrainer(MyParams)
     >>> trainer.optimize_train_score = True
     >>> trainer.metric
-    Metric(name='train_score', greater_is_better=True)
+    'train_score'
     """
 
     X_valid: Any = None
@@ -178,10 +178,8 @@ class SklearnTrainer(_SklearnTrainerBase[P]):
     optimize_train_score: bool = False
 
     @property
-    def metric(self) -> letstune.Metric:
-        return letstune.Metric(
-            "train_score" if self.optimize_train_score else "valid_score"
-        )
+    def metric(self) -> str:
+        return "train_score" if self.optimize_train_score else "valid_score"
 
     def train(self, params: P) -> tuple[Any, MetricValues]:
         model = self._create_model(params)
@@ -325,8 +323,8 @@ class SklearnCVTrainer(_SklearnTrainerBase[P]):
         self._cv: Splitter = cv  # type: ignore
 
     @property
-    def metric(self) -> letstune.Metric:
-        return letstune.Metric("mean_valid_score")
+    def metric(self) -> str:
+        return "mean_valid_score"
 
     def train(self, params: P) -> tuple[Any, MetricValues]:
         model = self._create_model(params)

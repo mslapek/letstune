@@ -11,12 +11,12 @@ import letstune.backend.runner.epoch
 from letstune.backend import repo
 from letstune.backend.repo import JSON, EpochStats, Training
 from letstune.backend.scheduler.epoch import Config, Task
-from letstune.metrics import MetricValues
+from letstune.trainer import MetricValues
 
 from .utils import HistoryLogger
 
 CONFIG = Config(round_durations=[timedelta(minutes=2), timedelta(minutes=5)])
-METRIC = letstune.Metric("accuracy")
+METRIC = "accuracy"
 
 
 class ModelParams(letstune.Params):

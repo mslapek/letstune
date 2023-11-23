@@ -5,7 +5,7 @@ from pytest_mock import MockerFixture
 
 import letstune
 from letstune import SimpleTrainer, rand
-from letstune.metrics import MetricValues
+from letstune.trainer import MetricValues
 
 
 class SomeParams(letstune.Params):
@@ -13,7 +13,7 @@ class SomeParams(letstune.Params):
 
 
 class QwertyTrainer(SimpleTrainer[SomeParams]):
-    metric = letstune.Metric("accuracy")
+    metric = "accuracy"
 
     def train(self, params: SomeParams) -> tuple[Any, MetricValues]:
         return object(), {"accuracy": 0.8}

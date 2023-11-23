@@ -36,7 +36,7 @@ class MyParams(letstune.Params):
 
 
 def test_get_random_params() -> None:
-    trainer = KerasTrainer(MyParams, letstune.Metric("accuracy"))
+    trainer = KerasTrainer(MyParams, "accuracy")
 
     params = trainer.get_random_params(np.random.default_rng(42))
 
@@ -45,7 +45,7 @@ def test_get_random_params() -> None:
 
 
 def test_load_dataset() -> None:
-    trainer = KerasTrainer(MyParams, letstune.Metric("accuracy"))
+    trainer = KerasTrainer(MyParams, "accuracy")
 
     trainer.load_dataset(("array1", "array2"))
 
@@ -55,7 +55,7 @@ def test_load_dataset() -> None:
 
 
 def test_load_dataset_with_valid() -> None:
-    trainer = KerasTrainer(MyParams, letstune.Metric("val_accuracy"))
+    trainer = KerasTrainer(MyParams, "val_accuracy")
 
     trainer.load_dataset(("array1", "array2", "obj3"))
 
@@ -65,7 +65,7 @@ def test_load_dataset_with_valid() -> None:
 
 
 def test_load_dataset_with_invalid_argument() -> None:
-    trainer = KerasTrainer(MyParams, letstune.Metric("accuracy"))
+    trainer = KerasTrainer(MyParams, "accuracy")
 
     with pytest.raises(
         ValueError,
@@ -75,13 +75,13 @@ def test_load_dataset_with_invalid_argument() -> None:
 
 
 def test_metric() -> None:
-    trainer = KerasTrainer(MyParams, letstune.Metric("foobar", greater_is_better=True))
+    trainer = KerasTrainer(MyParams, "foobar")
 
-    assert trainer.metric == letstune.Metric("foobar", greater_is_better=True)
+    assert trainer.metric == "foobar"
 
 
 def test_create_model() -> None:
-    trainer = KerasTrainer(MyParams, letstune.Metric("accuracy"))
+    trainer = KerasTrainer(MyParams, "accuracy")
     trainer.load_dataset(("array1", "array2"))
     params = MyParams(x=12)
 
@@ -96,7 +96,7 @@ def test_create_model() -> None:
 def test_create_model_kwargs() -> None:
     trainer = KerasTrainer(
         MyParams,
-        letstune.Metric("accuracy"),
+        "accuracy",
         create_model_kwargs={"color": "blue", "foo": 58},
     )
     trainer.load_dataset(("array1", "array2"))
@@ -111,7 +111,7 @@ def test_create_model_kwargs() -> None:
 
 
 def test_train_epoch() -> None:
-    trainer = KerasTrainer(MyParams, letstune.Metric("accuracy"))
+    trainer = KerasTrainer(MyParams, "accuracy")
     trainer.load_dataset(("array1", "array2"))
     params = MyParams(x=12)
     trainer.create_model(params)
@@ -133,7 +133,7 @@ def test_train_epoch() -> None:
 
 
 def test_train_epoch_with_valid() -> None:
-    trainer = KerasTrainer(MyParams, letstune.Metric("accuracy"))
+    trainer = KerasTrainer(MyParams, "accuracy")
     trainer.load_dataset(("array1", "array2", "obj3"))
     params = MyParams(x=12)
     trainer.create_model(params)
@@ -158,7 +158,7 @@ def test_train_epoch_with_valid() -> None:
 def test_train_epoch_kwargs() -> None:
     trainer = KerasTrainer(
         MyParams,
-        letstune.Metric("accuracy"),
+        "accuracy",
         fit_model_kwargs={"color": "blue", "foo": 58},
     )
     trainer.load_dataset(("array1", "array2"))
@@ -186,7 +186,7 @@ def test_train_epoch_kwargs() -> None:
 def test_train_epoch_kwargs_with_valid() -> None:
     trainer = KerasTrainer(
         MyParams,
-        letstune.Metric("accuracy"),
+        "accuracy",
         fit_model_kwargs={"color": "blue", "foo": 58},
     )
     trainer.load_dataset(("array1", "array2", "obj3"))
@@ -215,7 +215,7 @@ def test_train_epoch_kwargs_with_valid() -> None:
 def test_train_epoch_kwargs_with_custom_verbose() -> None:
     trainer = KerasTrainer(
         MyParams,
-        letstune.Metric("accuracy"),
+        "accuracy",
         fit_model_kwargs={"color": "blue", "foo": 58, "verbose": 123},
     )
     trainer.load_dataset(("array1", "array2"))
@@ -248,7 +248,7 @@ def test_save_calls_save_keras(mocker: MockerFixture) -> None:
     checkpoint = Checkpoint()
     save_keras_spy = mocker.spy(checkpoint, "save_keras")
 
-    trainer = KerasTrainer(MyParams, letstune.Metric("accuracy"))
+    trainer = KerasTrainer(MyParams, "accuracy")
     model = object()
     trainer.model = model
 
@@ -265,7 +265,7 @@ def test_load_calls_load_keras() -> None:
             return model
 
     checkpoint = Checkpoint()
-    trainer = KerasTrainer(MyParams, letstune.Metric("accuracy"))
+    trainer = KerasTrainer(MyParams, "accuracy")
 
     trainer.load(checkpoint, MyParams(x=999))
 

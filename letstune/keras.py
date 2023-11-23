@@ -4,12 +4,9 @@ from typing import Any, TypeVar
 
 import numpy as np
 
-import letstune
-
-from .metrics import MetricValues
 from .params import Params
 from .rand import RandomParamsGenerator
-from .trainer import EpochTrainer
+from .trainer import EpochTrainer, MetricValues
 
 __all__ = ["KerasTrainer"]
 
@@ -78,7 +75,7 @@ class KerasTrainer(EpochTrainer[P]):
     def __init__(
         self,
         params_cls: type[P] | RandomParamsGenerator[P],
-        metric: letstune.Metric,
+        metric: str,
         *,
         create_model_kwargs: dict[str, Any] | None = None,
         fit_model_kwargs: dict[str, Any] | None = None,
@@ -90,11 +87,11 @@ class KerasTrainer(EpochTrainer[P]):
         Instead of a type, you can pass any object with ``get_random_params``
         method.
 
-        Second parameter is :class:`letstune.Metric`.
+        Second parameter is a string with metric.
         If you are using ``validation_data``, don't forget to prefix
         metric name with ``val_``::
 
-            metric = letstune.Metric("val_accuracy")
+            metric = "val_accuracy"
 
         **Additional keyword arguments**
 
@@ -125,7 +122,7 @@ class KerasTrainer(EpochTrainer[P]):
             self.__fit_model_kwargs.update(fit_model_kwargs)
 
     @property
-    def metric(self) -> letstune.Metric:
+    def metric(self) -> str:
         return self.__metric
 
     def get_random_params(self, rng: np.random.Generator) -> P:

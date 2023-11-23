@@ -78,7 +78,7 @@ def test_load_dataset_with_invalid_argument() -> None:
 def test_metric() -> None:
     trainer = SklearnCVTrainer(MyParams)
 
-    assert trainer.metric == letstune.Metric("mean_valid_score", greater_is_better=True)
+    assert trainer.metric == "mean_valid_score"
 
 
 def test_train() -> None:

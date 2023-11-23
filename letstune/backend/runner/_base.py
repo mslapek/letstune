@@ -3,7 +3,6 @@ import pickle
 from datetime import datetime, timezone
 from typing import Any, Callable, Generic, Sequence, TypeVar
 
-import letstune
 from letstune import Params
 from letstune.backend import repo
 from letstune.backend.runner import log
@@ -24,7 +23,7 @@ class Runner(Generic[P, Trainer, Task]):
     logger: log.Logger = log.NULL_LOGGER
     _repository: repo.Repository
     _params_cls: type[P]
-    _metric: letstune.Metric
+    _metric: str
 
     def __init__(
         self,

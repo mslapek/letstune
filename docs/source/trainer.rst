@@ -8,12 +8,6 @@ Summary
 
 .. automodule:: letstune.trainer
 
-Metric class
-<<<<<<<<<<<<
-
-.. autoclass:: letstune.Metric
-   :members:
-
 Simple trainer class
 <<<<<<<<<<<<<<<<<<<<
 

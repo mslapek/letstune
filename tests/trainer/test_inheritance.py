@@ -4,7 +4,7 @@ import numpy as np
 
 import letstune
 from letstune import SimpleTrainer, rand
-from letstune.metrics import MetricValues
+from letstune.trainer import MetricValues
 
 
 class SomeParams(letstune.Params):
@@ -15,7 +15,7 @@ def test_inherit_one() -> None:
     P = TypeVar("P", bound=letstune.Params)
 
     class MyBaseTrainer(SimpleTrainer[P]):
-        metric = letstune.Metric("loss")
+        metric = "loss"
 
         def train(self, params: P) -> tuple[Any, MetricValues]:
             return object(), {"loss": 0.5}
@@ -39,7 +39,7 @@ def test_inherit_many() -> None:
     P = TypeVar("P", bound=letstune.Params)
 
     class MyBaseTrainer(SimpleTrainer[P]):
-        metric = letstune.Metric("loss")
+        metric = "loss"
 
         def train(self, params: P) -> tuple[Any, MetricValues]:
             return object(), {"loss": 0.5}
@@ -73,7 +73,7 @@ def test_inherit_many_with_generics() -> None:
     B = TypeVar("B")
 
     class MyBaseTrainer(SimpleTrainer[P]):
-        metric = letstune.Metric("loss")
+        metric = "loss"
 
         def train(self, params: P) -> tuple[Any, MetricValues]:
             return object(), {"loss": 0.5}

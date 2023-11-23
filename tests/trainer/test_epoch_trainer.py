@@ -5,7 +5,7 @@ from pytest_mock import MockerFixture
 
 import letstune
 from letstune import EpochTrainer, rand
-from letstune.metrics import MetricValues
+from letstune.trainer import MetricValues
 
 
 class Model:
@@ -21,7 +21,7 @@ class SomeParams(letstune.Params):
 
 
 class QwertyTrainer(EpochTrainer[SomeParams]):
-    metric = letstune.Metric("accuracy")
+    metric = "accuracy"
 
     def train_epoch(self, epoch: int) -> MetricValues:
         return {}
@@ -87,7 +87,7 @@ def test_create_model_calls_params_create_model() -> None:
             return Model(self.x)
 
     class QwertyTrainer2(EpochTrainer[SomeParams2]):
-        metric = letstune.Metric("accuracy")
+        metric = "accuracy"
 
         def train_epoch(self, epoch: int) -> MetricValues:
             return {}
