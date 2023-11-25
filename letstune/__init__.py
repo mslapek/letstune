@@ -6,7 +6,7 @@ __all__ = [
     "tune",
 ]
 
-__version__ = "0.3.0-dev"
+__version__ = "0.3.0"
 
 
 from .params import Params
