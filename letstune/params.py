@@ -135,13 +135,7 @@ def _validate_leftover_generators(dct: dict[str, Any]) -> None:
 
 
 def _assert_bases_are_valid(bases: tuple[Any, ...]) -> None:
-    valid = len(bases) == 1
-
-    if valid:
-        base = bases[0]
-        valid = base == Params
-
-    if not valid:
+    if bases != (Params,):
         raise TypeError(f"only letstune.Params is allowed as a base (got {bases})")
 
 
