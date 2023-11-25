@@ -23,6 +23,8 @@ gens = [alpha_gen, beta_gen, gamma_gen]
 
 
 class MyQwertyModelParams(letstune.ModelParams[MyFooModel]):
+    model_cls = MyFooModel
+
     alpha: int = alpha_gen  # type: ignore
     beta: str = beta_gen  # type: ignore
     gamma: float = gamma_gen  # type: ignore

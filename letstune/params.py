@@ -10,6 +10,7 @@ __all__ = [
 
 import dataclasses
 import sys
+import typing
 from types import UnionType
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, final
 
@@ -564,7 +565,8 @@ class ModelParams(Generic[M], Params):
     ...             f"and {self.max_features=}"
     ...         )
 
-    >>> class RandomForestParams(ModelParams[RandomForestRegressor]):
+    >>> class RandomForestParams(ModelParams):
+    ...     model_cls = RandomForestRegressor
     ...     min_samples_split: int
     ...     max_features: str
 
@@ -596,11 +598,11 @@ class ModelParams(Generic[M], Params):
     """  # noqa
 
     __slots__: tuple[str, ...] = tuple()
+    model_cls: type[M] | typing.Callable[..., M]
 
     @final
     def create_model(self, **kwargs: Any) -> M:
-        """For a class inheriting from :class:`ModelParams` [``M``],
-        it returns a model of type ``M``.
+        """Returns a model of a type declared in ``model_cls``.
 
         The model is created with arguments collected from the params.
         Additionally, it passes arguments given directly
@@ -608,7 +610,9 @@ class ModelParams(Generic[M], Params):
 
         For a class::
 
-            class RandomForestParams(ModelParams[RandomForestRegressor]):
+            class RandomForestParams(ModelParams):
+                model_cls = RandomForestRegressor
+
                 min_samples_split: int
                 max_features: str
 
@@ -629,7 +633,7 @@ class ModelParams(Generic[M], Params):
         Notice, that arguments passed to :meth:`create_model` have precedence
         over the arguments from ``params``.
         """
-        m = type(self).__orig_bases__[0].__args__[0]  # type: ignore
+        m = self.model_cls
         d = self.to_dict()
         d |= kwargs
         return m(**d)  # type: ignore
