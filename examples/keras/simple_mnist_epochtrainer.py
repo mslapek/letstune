@@ -16,10 +16,10 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 import letstune
-from letstune import rand
+from letstune import Params, rand
 
 
-class MNISTParams(letstune.Params):
+class MNISTParams(Params):
     units: int = rand.oneof(range(32, 512 + 1, 32))  # type: ignore
 
     def create_model(self) -> keras.Model:

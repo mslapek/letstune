@@ -18,24 +18,28 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 import letstune
-from letstune import rand
+from letstune import Params, rand
 
 
-class DenseParams(letstune.ModelParams[layers.Dense]):
+class DenseParams(Params):
+    model_cls = layers.Dense
+
     units: int = rand.oneof(range(32, 512 + 1, 32))  # type: ignore
     activation: str = rand.oneof(["relu", "tanh"])  # type: ignore
 
 
-class AdamParams(letstune.ModelParams[keras.optimizers.Adam]):
+class AdamParams(Params):
+    model_cls = keras.optimizers.Adam
+
     learning_rate: float = rand.uniform(1e-4, 1e-2, log=True)  # type: ignore
     epsilon: float = rand.uniform(1e-8, 1e1, log=True)  # type: ignore
 
 
-class AdadeltaParams(letstune.ModelParams[keras.optimizers.Adadelta]):
-    pass
+class AdadeltaParams(Params):
+    model_cls = keras.optimizers.Adadelta
 
 
-class MNISTParams(letstune.Params):
+class MNISTParams(Params):
     dense: DenseParams
     optimizer: AdamParams | AdadeltaParams
     dropout: bool

@@ -1,17 +1,15 @@
-"""Base classes :class:`Params` and :class:`ModelParams`
-used to define hyper-parameters."""
+"""Base class :class:`Params` used to define hyper-parameters."""
 
 
 __all__ = [
     "Params",
-    "ModelParams",
     "NoDefaultRandomGeneratorError",
 ]
 
 import dataclasses
 import sys
 from types import UnionType
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, final
+from typing import TYPE_CHECKING, Any, TypeVar, final
 
 import numpy as np
 
@@ -112,9 +110,7 @@ def _pop_field(
     return (field_name, field_type, dataclasses.field(metadata=metadata))
 
 
-def _validate_forbidden_methods(
-    name: str, dct: dict[str, Any], model_params: bool
-) -> None:
+def _validate_forbidden_methods(dct: dict[str, Any]) -> None:
     for k in dct:
         if k in {
             "__init__",
@@ -130,13 +126,6 @@ def _validate_forbidden_methods(
             "__setstate__",
         }:
             raise TypeError(f"cannot override {k}")
-        elif model_params and k == "create_model":
-            raise TypeError(
-                f"""cannot override create_model. """
-                f"""Please use letstune.Params as the base:\n"""
-                f"""class {name}(letstune.Params):\n"""
-                f"""    ...\n"""
-            )
 
 
 def _validate_leftover_generators(dct: dict[str, Any]) -> None:
@@ -146,31 +135,19 @@ def _validate_leftover_generators(dct: dict[str, Any]) -> None:
 
 
 def _assert_bases_are_valid(bases: tuple[Any, ...]) -> None:
-    valid = len(bases) == 1
-
-    if valid:
-        base = bases[0]
-        valid = base == Params or base == ModelParams
-
-    if not valid:
-        raise TypeError(
-            f"only letstune.Params and letstune.ModelParams "
-            f"are allowed as a base (got {bases})"
-        )
+    if bases != (Params,):
+        raise TypeError(f"only letstune.Params is allowed as a base (got {bases})")
 
 
-def _is_class_from_letstune(name: str, dct: dict[str, Any]) -> bool:
-    return dct["__module__"] == "letstune.params" and name in {
-        "Params",
-        "ModelParams",
-    }
+def _is_class_letstune_params(name: str, dct: dict[str, Any]) -> bool:
+    return dct["__module__"] == "letstune.params" and name == "Params"
 
 
 class _ParamsMeta(type):
     def __new__(
         mcs: type, name: str, bases: tuple[Any, ...], dct: dict[str, Any]
     ) -> Any:
-        if _is_class_from_letstune(name, dct):
+        if _is_class_letstune_params(name, dct):
             return super().__new__(mcs, name, bases, dct)  # type: ignore
 
         _assert_bases_are_valid(bases)
@@ -178,7 +155,7 @@ class _ParamsMeta(type):
             dct,
             _pop_annotations(dct),
         )
-        _validate_forbidden_methods(name, dct, bases[0] == ModelParams)
+        _validate_forbidden_methods(dct)
 
         fields = [
             _pop_field(dct, field_name, field_type)
@@ -532,104 +509,20 @@ class Params(metaclass=_ParamsMeta):
         """  # noqa
         return {f.name: getattr(self, f.name) for f in dataclasses.fields(self)}
 
+    # trick to make mypy happy with custom overloads
+    create_model: Any  # type: ignore
 
-M = TypeVar("M")
-
-
-class ModelParams(Generic[M], Params):
-    """Base class used to define hyper-parameters, which are used
-    to create a model.
-
-    Has all features of the :class:`Params` class.
-
-    Additionally, it provides :meth:`create_model` method, which creates
-    the model using given params.
-
-    >>> class RandomForestRegressor:
-    ...     '''sklearn-like model class.'''
-    ...     def __init__(
-    ...         self,
-    ...         n_estimators: int = 100,
-    ...         min_samples_split: int = 2,
-    ...         max_features: str = "auto",
-    ...     ):
-    ...         self.n_estimators = n_estimators
-    ...         self.min_samples_split = min_samples_split
-    ...         self.max_features = max_features
-    ...
-    ...     def fit(self, X, y):
-    ...         print(
-    ...             f"fitted with {self.n_estimators=}\\n"
-    ...             f"and {self.min_samples_split=}\\n"
-    ...             f"and {self.max_features=}"
-    ...         )
-
-    >>> class RandomForestParams(ModelParams[RandomForestRegressor]):
-    ...     min_samples_split: int
-    ...     max_features: str
-
-    >>> params = RandomForestParams(min_samples_split=8, max_features="log2")
-    >>> params
-    RandomForestParams(min_samples_split=8, max_features='log2')
-    >>> isinstance(params, RandomForestParams)
-    True
-
-    >>> model = params.create_model()
-    >>> isinstance(model, RandomForestRegressor)
-    True
-    >>> model.fit([1, 2, 3], [4, 5, 6])
-    fitted with self.n_estimators=100
-    and self.min_samples_split=8
-    and self.max_features='log2'
-
-    :meth:`create_model` can accept additional keyword arguments, which
-    are passed to the model.
-
-    >>> params = RandomForestParams(min_samples_split=8, max_features="log2")
-
-    >>> model = params.create_model(n_estimators=500, min_samples_split=4)
-    >>> model.fit([1, 2, 3], [4, 5, 6])
-    fitted with self.n_estimators=500
-    and self.min_samples_split=4
-    and self.max_features='log2'
-
-    """  # noqa
-
-    __slots__: tuple[str, ...] = tuple()
-
-    @final
-    def create_model(self, **kwargs: Any) -> M:
-        """For a class inheriting from :class:`ModelParams` [``M``],
-        it returns a model of type ``M``.
+    def create_model(self, **kwargs: Any) -> Any:  # type: ignore
+        """Returns a model of a type declared in ``model_cls``.
 
         The model is created with arguments collected from the params.
         Additionally, it passes arguments given directly
         to the :meth:`create_model` method.
 
-        For a class::
-
-            class RandomForestParams(ModelParams[RandomForestRegressor]):
-                min_samples_split: int
-                max_features: str
-
-            params = RandomForestParams(min_samples_split=8, max_features="log2")
-
-        calling :meth:`create_model` method::
-
-            model = params.create_model(n_estimators=500)
-
-        is equivalent to::
-
-            model = RandomForestParams(
-                min_samples_split=params.min_samples_split,
-                max_features=params.max_features,
-                n_estimators=500,
-            )
-
         Notice, that arguments passed to :meth:`create_model` have precedence
         over the arguments from ``params``.
         """
-        m = type(self).__orig_bases__[0].__args__[0]  # type: ignore
+        m = type(self).model_cls  # type: ignore
         d = self.to_dict()
         d |= kwargs
         return m(**d)  # type: ignore

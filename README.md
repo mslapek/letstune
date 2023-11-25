@@ -68,9 +68,11 @@ First, define your **parameters**:
 
 ```python
 import letstune
-from letstune import rand
+from letstune import Params, rand
 
-class SGDClassifierParams(letstune.ModelParams[SGDClassifier]):
+class SGDClassifierParams(Params):
+    model_cls = SGDClassifier
+
     average: bool
     l1_ratio: float = rand.uniform(0, 1)
     alpha: float = rand.uniform(1e-2, 1e0, log=True)

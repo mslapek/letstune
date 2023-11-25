@@ -10,13 +10,6 @@ Params class
    :members:
    :undoc-members:
 
-ModelParams class
-<<<<<<<<<<<<<<<<<
-
-.. autoclass:: letstune.ModelParams
-   :members:
-   :show-inheritance:
-
 Exceptions
 <<<<<<<<<<
 

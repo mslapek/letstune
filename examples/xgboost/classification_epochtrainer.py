@@ -7,12 +7,12 @@ import xgboost as xgb
 from sklearn.datasets import make_classification
 
 import letstune
-from letstune import rand
+from letstune import Params, rand
 
 NUM_CLASSES = 3
 
 
-class BoosterParams(letstune.Params):
+class BoosterParams(Params):
     max_depth: int = rand.ints(2, 6)  # type: ignore
     eta: float = rand.uniform(0.01, 0.2, log=True)  # type: ignore
 

@@ -22,7 +22,9 @@ gamma_gen = ConstantRandomParamsGenerator(3.3)
 gens = [alpha_gen, beta_gen, gamma_gen]
 
 
-class MyQwertyModelParams(letstune.ModelParams[MyFooModel]):
+class MyQwertyModelParams(letstune.Params):
+    model_cls = MyFooModel
+
     alpha: int = alpha_gen  # type: ignore
     beta: str = beta_gen  # type: ignore
     gamma: float = gamma_gen  # type: ignore
@@ -39,7 +41,6 @@ def params() -> MyQwertyModelParams:
 def test_instance_creation(params: MyQwertyModelParams) -> None:
     assert isinstance(params, MyQwertyModelParams)
     assert isinstance(params, letstune.Params)
-    assert isinstance(params, letstune.ModelParams)
     assert params.alpha == 2
     assert params.beta == "qwerty"
     assert params.gamma == -10.0
@@ -164,19 +165,13 @@ def test_missing_init_keyword_argument() -> None:
         _ = MyQwertyModelParams(alpha=5, gamma=3.14)
 
 
-def test_custom_create_model_is_forbidden() -> None:
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            """cannot override create_model. """
-            """Please use letstune.Params as the base:\n"""
-            """class MyFooParams(letstune.Params):\n"""
-            """    ...\n"""
-        ),
-    ):
+def test_custom_create_model_is_ok() -> None:
+    class MyFooParams(letstune.Params):
+        def create_model(self, x: int) -> MyFooModel:  # type: ignore
+            return MyFooModel(x=x, y=8)
 
-        class MyFooParams(letstune.ModelParams[MyFooModel]):
-            def create_model(self, x: int) -> MyFooModel:  # type: ignore
-                return MyFooModel(x=x, y=8)
+    p = MyFooParams()
+    model = p.create_model(x=5)
 
-        _ = MyFooParams
+    assert isinstance(model, MyFooModel)
+    assert model.called_kwargs == {"x": 5, "y": 8}
