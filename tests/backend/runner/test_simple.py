@@ -97,6 +97,7 @@ class SimpleCheckpointFactory:
 
 
 class Trainer(letstune.SimpleTrainer[ModelParams]):
+    params_cls = ModelParams
     metric = "accuracy"
 
     def __init__(self) -> None:

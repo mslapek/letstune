@@ -115,6 +115,7 @@ class EpochCheckpointFactory:
 
 
 class Trainer(letstune.EpochTrainer[ModelParams]):
+    params_cls = ModelParams
     metric = METRIC
 
     def __init__(self) -> None:

@@ -13,6 +13,7 @@ class SomeParams(letstune.Params):
 
 
 class QwertyTrainer(SimpleTrainer[SomeParams]):
+    params_cls = SomeParams
     metric = "accuracy"
 
     def train(self, params: SomeParams) -> tuple[Any, MetricValues]:

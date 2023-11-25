@@ -29,6 +29,7 @@ class SGDClassifierParams(letstune.ModelParams[SGDClassifier]):
 
 
 class DigitsTrainer(letstune.SimpleTrainer[SGDClassifierParams]):
+    params_cls = SGDClassifierParams
     metric = "mean_accuracy"
 
     def load_dataset(self, dataset: Any) -> None:

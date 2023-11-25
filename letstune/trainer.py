@@ -48,13 +48,12 @@ can be called many times.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Iterable, TypeVar
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 
-import letstune
-
 from .params import Params
+from .rand import RandomParamsGenerator
 
 __all__ = [
     "SimpleTrainer",
@@ -69,27 +68,14 @@ MetricValues = dict[str, float]
 P = TypeVar("P", bound=Params)
 
 
-def _get_all_generic_params(obj: Any) -> Iterable[type]:
-    for base in obj.__orig_bases__:
-        yield from getattr(base, "__args__", tuple())
-
-
-def _get_params(obj: Any) -> type[letstune.Params]:
-    candidates = {
-        t for t in _get_all_generic_params(obj) if issubclass(t, letstune.Params)
-    }
-
-    if len(candidates) > 1:
-        raise ValueError(f"Expected one Params class in base, got {candidates}")
-
-    if len(candidates) == 0:
-        raise ValueError("Got no generic parameters in base")
-
-    return next(iter(candidates))
-
-
 class _BaseTrainer(ABC, Generic[P]):
     """Common features of :class:`SimpleTrainer` and :class:`EpochTrainer`."""
+
+    @property
+    @abstractmethod
+    def params_cls(self) -> type[P] | RandomParamsGenerator[P]:
+        """Default generator of params."""
+        pass
 
     @property
     @abstractmethod
@@ -102,14 +88,8 @@ class _BaseTrainer(ABC, Generic[P]):
         pass
 
     def get_random_params(self, rng: np.random.Generator) -> P:
-        """Get random instance of the params.
-
-        For a class inheriting from :class:`letstune.SimpleTrainer` [``P``]
-        or :class:`letstune.EpochTrainer` [``P``],
-        it returns a random instance of ``P``.
-        """
-        p = _get_params(type(self))
-        return p.get_random_params(rng)  # type: ignore
+        """Get random instance of the params."""
+        return self.params_cls.get_random_params(rng)  # type: ignore
 
     @abstractmethod
     def load_dataset(self, dataset: Any) -> None:
