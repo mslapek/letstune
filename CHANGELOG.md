@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `letstune.keras.KerasTrainer` calls `model.fit` with turned off Keras logging (`verbose=0`). 
 
 ### Removed
+- Remove `get_random_params` from trainers.
 - Remove `letstune.ModelParams`. Instead, use `letstune.Params` with `model_cls` parameter.
 - Remove custom Keras and Scikit-Learn trainers. Basic trainers realize the same functionality in a more clear way.
 - Remove `letstune.Metric` class. Replace it with `str`. Now metrics are always greater-is-better.

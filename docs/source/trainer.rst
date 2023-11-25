@@ -28,7 +28,6 @@ Simple trainer class
    Methods, which can me overridden for further customization:
 
    .. automethod:: save
-   .. automethod:: get_random_params
 
 Epoch trainer class
 <<<<<<<<<<<<<<<<<<<<
@@ -50,12 +49,6 @@ Epoch trainer class
    .. automethod:: train_epoch
    .. automethod:: save
    .. automethod:: load
-
-   **Miscellaneous**
-
-   Methods, which can me overridden for further customization:
-
-   .. automethod:: get_random_params
 
 
 .. _rounds:

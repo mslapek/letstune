@@ -50,8 +50,6 @@ can be called many times.
 from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
-import numpy as np
-
 from .params import Params
 from .rand import RandomParamsGenerator
 
@@ -86,10 +84,6 @@ class _BaseTrainer(ABC, Generic[P]):
         Always interpreted as greater is better.
         """
         pass
-
-    def get_random_params(self, rng: np.random.Generator) -> P:
-        """Get random instance of the params."""
-        return self.params_cls.get_random_params(rng)  # type: ignore
 
     @abstractmethod
     def load_dataset(self, dataset: Any) -> None:
