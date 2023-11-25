@@ -14,7 +14,6 @@ letstune
    trainer
    tune
    results
-   premade
    misc
 
 `Main page and repository <https://letstune.org/>`_
