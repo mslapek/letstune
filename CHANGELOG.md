@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Add parameter `add_union_type` to `Params.to_json`.
+
 ### Changed
 - Trainers now have parameters class set through `params_cls` instead of a generic parameter.
 - `letstune.keras.KerasTrainer` calls `model.fit` with turned off Keras logging (`verbose=0`). 

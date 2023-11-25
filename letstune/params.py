@@ -360,7 +360,7 @@ class Params(metaclass=_ParamsMeta):
         return result
 
     @final
-    def to_json(self) -> dict[str, Any]:
+    def to_json(self, *, add_union_type: bool = False) -> dict[str, Any]:
         """Converts given params to JSON.
 
         >>> class NeuralNetworkParams(Params):
@@ -422,11 +422,21 @@ class Params(metaclass=_ParamsMeta):
             "pca_components": 4
         }
 
-        """  # noqa
-        return self._to_json()
+        If ``add_union_type`` is ``True``, then the type of the object is added th the dict:
 
-    @final
-    def _to_json(self, *, add_union_type: bool = False) -> dict[str, Any]:
+        >>> print(json.dumps(params.to_json(add_union_type=True), indent=4))
+        {
+            "model_params": {
+                "RandomForestParams": {
+                    "min_samples_split": 4,
+                    "max_features": "log2"
+                },
+                "type": "RandomForestParams"
+            },
+            "pca_components": 4
+        }
+
+        """  # noqa
         return {
             field.name: self.__field_to_json(field, add_union_type)
             for field in dataclasses.fields(self)
