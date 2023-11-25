@@ -63,14 +63,14 @@ def test_no_other_model_params_subclasses() -> None:
 
     with pytest.raises(TypeError, match="Foo"):
 
-        class InvalidParams1(letstune.ModelParams[Model], Foo):
+        class InvalidParams1(letstune.Params, Foo):
             x: int
 
         _ = InvalidParams1
 
     with pytest.raises(TypeError, match="Foo"):
 
-        class InvalidParams2(Foo, letstune.ModelParams[Model]):
+        class InvalidParams2(Foo, letstune.Params):
             x: int
 
         _ = InvalidParams2
@@ -159,7 +159,7 @@ def test_invalid_params_type() -> None:
             "__getstate__",
             "__setstate__",
         ],
-        ["letstune.Params", "letstune.ModelParams[Foo]"],
+        ["letstune.Params"],
         ["", "@classmethod"],
     ),
 )

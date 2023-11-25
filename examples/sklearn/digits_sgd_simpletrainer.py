@@ -20,7 +20,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 
-class SGDClassifierParams(letstune.ModelParams[SGDClassifier]):
+class SGDClassifierParams(letstune.Params):
     model_cls = SGDClassifier
 
     average: bool
