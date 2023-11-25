@@ -29,7 +29,7 @@ def test_inherit_one() -> None:
     rng = np.random.default_rng(42)
     trainer = MyDerivedTrainer()
 
-    params = trainer.get_random_params(rng)
+    params = trainer.params_cls.get_random_params(rng)
 
     assert isinstance(params, SomeParams)
     assert params.x == 13
@@ -61,7 +61,7 @@ def test_inherit_many() -> None:
     rng = np.random.default_rng(42)
     trainer = MyDerivedTrainer()
 
-    params = trainer.get_random_params(rng)
+    params = trainer.params_cls.get_random_params(rng)
 
     assert isinstance(params, SomeParams)
     assert params.x == 13
@@ -97,7 +97,7 @@ def test_inherit_many_with_generics() -> None:
     rng = np.random.default_rng(42)
     trainer = MyDerivedTrainer()
 
-    params = trainer.get_random_params(rng)
+    params = trainer.params_cls.get_random_params(rng)
 
     assert isinstance(params, SomeParams)
     assert params.x == 13

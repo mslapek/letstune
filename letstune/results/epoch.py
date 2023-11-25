@@ -140,7 +140,7 @@ class Training(_base.SequenceProxy[Epoch], Generic[P]):
 
         return {
             "training_id": self.training_id,
-            "params": self.params._to_json(add_union_type=True),
+            "params": self.params.to_json(add_union_type=True),
             "best_epoch_metrics": dict(best_epoch.metric_values),
             "last_epoch_metrics": dict(last_epoch.metric_values),
             "start_time": self.start_time,

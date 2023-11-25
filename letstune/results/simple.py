@@ -69,7 +69,7 @@ class Training(_base.TrainingStats, Generic[P]):
     def _to_json(self) -> dict[str, Any]:
         return {
             "training_id": self.training_id,
-            "params": self.params._to_json(add_union_type=True),
+            "params": self.params.to_json(add_union_type=True),
             "metrics": dict(self.metric_values),
             "start_time": self.start_time,
             "end_time": self.end_time,

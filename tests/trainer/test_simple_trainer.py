@@ -27,7 +27,7 @@ def test_get_random_params() -> None:
     rng = np.random.default_rng(42)
     trainer = QwertyTrainer()
 
-    params = trainer.get_random_params(rng)
+    params = trainer.params_cls.get_random_params(rng)
 
     assert isinstance(params, SomeParams)
     assert params == SomeParams(x=13)

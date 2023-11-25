@@ -182,7 +182,9 @@ def tune(
     try:
         checkpoint_factory = CheckpointFactory(results_dir / "checkpoints")
 
-        params_cls = _fill_with_params(repository, trainer, params_number)
+        # params_cls can be a generator, not necessary a class
+        generator: RandomParamsGenerator[P] = trainer.params_cls  # type: ignore
+        params_cls = _fill_with_params(repository, generator, params_number)
 
         if isinstance(trainer, EpochTrainer):
             if rounds is None:
