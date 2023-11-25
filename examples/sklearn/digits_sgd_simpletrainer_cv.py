@@ -12,7 +12,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import cross_val_score, train_test_split
 
 import letstune
-from letstune import rand
+from letstune import Params, rand
 from letstune.trainer import MetricValues
 
 X, y = sklearn.datasets.load_digits(return_X_y=True)
@@ -22,7 +22,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 
-class SGDClassifierParams(letstune.Params):
+class SGDClassifierParams(Params):
     model_cls = SGDClassifier
 
     average: bool

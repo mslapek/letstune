@@ -68,9 +68,9 @@ First, define your **parameters**:
 
 ```python
 import letstune
-from letstune import rand
+from letstune import Params, rand
 
-class SGDClassifierParams(letstune.Params):
+class SGDClassifierParams(Params):
     model_cls = SGDClassifier
 
     average: bool
