@@ -21,6 +21,7 @@ class SomeParams(letstune.Params):
 
 
 class QwertyTrainer(EpochTrainer[SomeParams]):
+    params_cls = SomeParams
     metric = "accuracy"
 
     def train_epoch(self, epoch: int) -> MetricValues:
@@ -87,6 +88,7 @@ def test_create_model_calls_params_create_model() -> None:
             return Model(self.x)
 
     class QwertyTrainer2(EpochTrainer[SomeParams2]):
+        params_cls = SomeParams2
         metric = "accuracy"
 
         def train_epoch(self, epoch: int) -> MetricValues:

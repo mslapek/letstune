@@ -41,6 +41,7 @@ class MNISTParams(letstune.Params):
 
 
 class MNISTTrainer(letstune.EpochTrainer[MNISTParams]):
+    params_cls = MNISTParams
     metric = "val_accuracy"
 
     def load_dataset(self, dataset: Any) -> None:

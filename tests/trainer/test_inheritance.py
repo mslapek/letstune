@@ -24,7 +24,7 @@ def test_inherit_one() -> None:
             pass
 
     class MyDerivedTrainer(MyBaseTrainer[SomeParams]):
-        pass
+        params_cls = SomeParams
 
     rng = np.random.default_rng(42)
     trainer = MyDerivedTrainer()
@@ -56,7 +56,7 @@ def test_inherit_many() -> None:
             pass
 
     class MyDerivedTrainer(SomeClass1, MyBaseTrainer[SomeParams], SomeClass2):
-        pass
+        params_cls = SomeParams
 
     rng = np.random.default_rng(42)
     trainer = MyDerivedTrainer()
@@ -92,7 +92,7 @@ def test_inherit_many_with_generics() -> None:
     class MyDerivedTrainer(
         SomeClass1[int], MyBaseTrainer[SomeParams], SomeClass2[float]
     ):
-        pass
+        params_cls = SomeParams
 
     rng = np.random.default_rng(42)
     trainer = MyDerivedTrainer()

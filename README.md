@@ -80,7 +80,8 @@ Then define a **trainer**.
 **Trainer** is an object, which knows how to **train** a model!
 
 ```python
-class DigitsTrainer(letstune.SimpleTrainer[SGDClassifierParams]):
+class DigitsTrainer(letstune.SimpleTrainer):
+    params_cls = SGDClassifierParams
     metric = "accuracy"
 
     def load_dataset(self, dataset):

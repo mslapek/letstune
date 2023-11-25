@@ -71,10 +71,14 @@ class _SklearnTrainerBase(letstune.SimpleTrainer[P], ABC):
         :func:`sklearn.metrics.get_scorer` will be used.
 
         """
-        self.__random_params_generator = params_cls
+        self.__params_cls = params_cls
         self.__create_model_kwargs = create_model_kwargs or {}
         self.__fit_model_kwargs = fit_model_kwargs or {}
         self.__scorer = scorer
+
+    @property
+    def params_cls(self) -> type[P] | RandomParamsGenerator[P]:
+        return self.__params_cls
 
     def _score(self, model: Any, X: Any, y: Any) -> float:
         """Evaluate score of the model."""
@@ -93,9 +97,6 @@ class _SklearnTrainerBase(letstune.SimpleTrainer[P], ABC):
 
     def _fit_model(self, model: Any, X: Any, y: Any) -> None:
         model.fit(X, y, **self.__fit_model_kwargs)
-
-    def get_random_params(self, rng: np.random.Generator) -> P:
-        return self.__random_params_generator.get_random_params(rng)
 
 
 class SklearnTrainer(_SklearnTrainerBase[P]):

@@ -28,6 +28,7 @@ class BoosterParams(letstune.Params):
 
 
 class ClassificationTrainer(letstune.EpochTrainer[BoosterParams]):
+    params_cls = BoosterParams
     metric = "valid_accuracy"
 
     def load_dataset(self, dataset: Any) -> None:

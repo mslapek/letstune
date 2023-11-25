@@ -2,8 +2,6 @@
 
 from typing import Any, TypeVar
 
-import numpy as np
-
 from .params import Params
 from .rand import RandomParamsGenerator
 from .trainer import EpochTrainer, MetricValues
@@ -114,7 +112,7 @@ class KerasTrainer(EpochTrainer[P]):
         """
 
         self.__metric = metric
-        self.__random_params_generator = params_cls
+        self.__params_cls = params_cls
         self.__create_model_kwargs = create_model_kwargs or {}
 
         self.__fit_model_kwargs = {"verbose": 0}
@@ -122,11 +120,12 @@ class KerasTrainer(EpochTrainer[P]):
             self.__fit_model_kwargs.update(fit_model_kwargs)
 
     @property
+    def params_cls(self) -> type[P] | RandomParamsGenerator[P]:
+        return self.__params_cls
+
+    @property
     def metric(self) -> str:
         return self.__metric
-
-    def get_random_params(self, rng: np.random.Generator) -> P:
-        return self.__random_params_generator.get_random_params(rng)
 
     def create_model(self, params: P) -> None:
         self.model = params.create_model(**self.__create_model_kwargs)  # type: ignore
